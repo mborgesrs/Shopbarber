@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpar Cache</title>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+            
+            caches.keys().then(function(names) {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+            });
+            
+            setTimeout(function() {
+                alert('Cache limpo! Agora vá para o Dashboard.');
+                window.location.href = '/dashboard.php';
+            }, 1000);
+        }
+    </script>
+</head>
+<body>
+    <h1>Limpando cache...</h1>
+    <p>Aguarde...</p>
+</body>
+</html>

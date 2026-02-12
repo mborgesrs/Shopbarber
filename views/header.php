@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../lib/billing.php';
+require_once __DIR__ . '/../lib/helpers.php';
+
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -85,7 +87,7 @@ if($current_company_id) {
                 <i id="arrow-menu-cadastros" class="fas fa-chevron-down text-[10px] text-gray-400 transition-transform"></i>
             </button>
             <div id="menu-cadastros" class="hidden pl-8 space-y-1 mt-1">
-                <a href="/clients.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Clientes</a>
+                <a href="/clients.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Pessoas</a>
                 <a href="/products.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Produtos</a>
             </div>
         </div>

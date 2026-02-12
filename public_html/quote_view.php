@@ -2,7 +2,7 @@
 session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__.'/../db.php';
 $id = $_GET['id'] ?? null; if(!$id) header('Location: quotes.php');
-$stmt=$pdo->prepare('SELECT q.*, c.name as client_name, c.phone as client_phone FROM quotes q JOIN clients c ON c.id=q.client_id WHERE q.id=?'); $stmt->execute([$id]); $q=$stmt->fetch(); if(!$q) header('Location: quotes.php');
+$stmt=$pdo->prepare('SELECT q.*, c.name as person_name, c.phone as person_phone, p.name as prof_name FROM quotes q JOIN clients c ON c.id=q.client_id LEFT JOIN professionals p ON p.id=q.professional_id WHERE q.id=?'); $stmt->execute([$id]); $q=$stmt->fetch(); if(!$q) header('Location: quotes.php');
 $items = $pdo->prepare('SELECT qi.*, p.name as product_name FROM quote_items qi JOIN products p ON p.id=qi.product_id WHERE qi.quote_id=?'); $items->execute([$id]); $items = $items->fetchAll();
 ?>
 <?php include __DIR__ . '/../views/header.php'; ?>
@@ -10,7 +10,10 @@ $items = $pdo->prepare('SELECT qi.*, p.name as product_name FROM quote_items qi 
   <div class="flex justify-between items-center mb-4">
     <div>
       <h2 class="text-2xl font-bold">Agendamento #<?=$q['id']?></h2>
-      <div class="text-sm text-gray-500"><?=htmlspecialchars($q['client_name'])?> — <?=htmlspecialchars($q['client_phone'])?></div>
+      <div class="text-sm text-gray-500"><?=htmlspecialchars($q['person_name'])?> — <?=htmlspecialchars($q['person_phone'])?></div>
+      <?php if($q['prof_name']): ?>
+        <div class="text-sm text-indigo-600 font-bold mt-1">Profissional: <?=htmlspecialchars($q['prof_name'])?></div>
+      <?php endif; ?>
     </div>
     <div>
       <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1 rounded">Gerar PDF</button>

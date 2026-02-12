@@ -18,14 +18,14 @@ $totalClients = count($clients);
 
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
   <div>
-    <h2 class="text-xl font-bold text-gray-800">Clientes</h2>
+    <h2 class="text-xl font-bold text-gray-800">Pessoas</h2>
     <p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Total: <?= $totalClients ?></p>
   </div>
   
   <div class="flex flex-1 md:max-w-xl gap-2">
     <form method="get" class="flex-1 flex gap-2">
       <div class="relative flex-1">
-        <input name="q" value="<?=htmlspecialchars($q)?>" placeholder="Buscar cliente..." class="w-full border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm">
+        <input name="q" value="<?=htmlspecialchars($q)?>" placeholder="Buscar pessoa..." class="w-full border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm">
         <i class="fas fa-search absolute left-3 top-2.5 text-gray-300 text-xs"></i>
       </div>
       <button type="submit" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">
@@ -39,14 +39,14 @@ $totalClients = count($clients);
     </form>
     
     <a href="client_create.php" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-100 font-bold text-sm whitespace-nowrap">
-      <i class="fas fa-plus"></i> Novo Cliente
+      <i class="fas fa-plus"></i> Nova Pessoa
     </a>
   </div>
 </div>
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
   <div class="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between font-bold text-sm text-gray-700 uppercase tracking-wider">
-    <span>Base de Clientes</span>
+    <span>Base de Pessoas</span>
     <i class="fas fa-address-book text-gray-400"></i>
   </div>
   <div class="overflow-x-auto">
@@ -71,9 +71,10 @@ $totalClients = count($clients);
           </td>
           <td class="px-6 py-2">
             <div class="flex flex-col">
-                <span class="text-gray-700 text-xs font-medium"><?=htmlspecialchars($c['phone'])?></span>
+                <span class="text-gray-700 text-xs font-medium"><?=formatPhone($c['phone'])?></span>
                 <span class="text-[10px] text-gray-400"><?=htmlspecialchars($c['email'])?></span>
             </div>
+
           </td>
           <td class="px-6 py-2 text-right">
             <div class="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

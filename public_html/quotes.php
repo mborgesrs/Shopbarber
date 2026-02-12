@@ -5,7 +5,12 @@ require_once __DIR__.'/../db.php';
 $day = $_GET['day'] ?? date('Y-m-d');
 $company_id = $_SESSION['company_id'];
 
-$stmt=$pdo->prepare('SELECT q.*, c.name as client_name FROM quotes q JOIN clients c ON c.id=q.client_id WHERE q.company_id=? AND DATE(q.date_time)=? ORDER BY q.date_time');
+$stmt=$pdo->prepare('SELECT q.*, c.name as client_name, p.name as prof_name 
+             FROM quotes q 
+             JOIN clients c ON c.id=q.client_id 
+             LEFT JOIN professionals p ON p.id=q.professional_id 
+             WHERE q.company_id=? AND DATE(q.date_time)=? 
+             ORDER BY q.date_time');
 $stmt->execute([$company_id, $day]); 
 $list=$stmt->fetchAll();
 
@@ -82,13 +87,23 @@ foreach($list as $q) {
             <thead class="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 tracking-widest font-bold">
                 <tr>
                     <th class="px-6 py-4 text-left">Hora</th>
-                    <th class="px-6 py-4 text-left">Cliente</th>
+                    <th class="px-6 py-4 text-left">Pessoa</th>
+                    <th class="px-6 py-4 text-left">Serviços</th>
+                    <th class="px-6 py-4 text-left">Profissional</th>
+                    <th class="px-6 py-4 text-left">Valor</th>
                     <th class="px-6 py-4 text-left">Status</th>
                     <th class="px-6 py-4 text-right">Ações</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
                 <?php foreach($list as $q): ?>
+                    <?php
+                        // Fetch services for this quote
+                        $itemStmt = $pdo->prepare('SELECT p.name FROM quote_items qi JOIN products p ON p.id=qi.product_id WHERE qi.quote_id=?');
+                        $itemStmt->execute([$q['id']]);
+                        $serviceNames = $itemStmt->fetchAll(PDO::FETCH_COLUMN);
+                        $servicesText = implode(', ', $serviceNames);
+                    ?>
                     <tr class="hover:bg-gray-50/80 transition-colors group">
                         <td class="px-6 py-4">
                             <span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm shadow-indigo-100">
@@ -99,8 +114,17 @@ foreach($list as $q) {
                         <td class="px-6 py-4">
                             <div class="flex flex-col">
                                 <span class="text-gray-900 font-bold"><?=htmlspecialchars($q['client_name'])?></span>
-                                <span class="text-xs text-gray-500"><?=htmlspecialchars($q['notes']) ?: 'Sem observações'?></span>
+                                <span class="text-xs text-gray-400"><?=htmlspecialchars($q['notes']) ?: 'Sem observações'?></span>
                             </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs text-gray-600"><?= htmlspecialchars($servicesText) ?: '<span class="text-gray-300 italic">Nenhum</span>' ?></span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-gray-600 font-medium"><?=htmlspecialchars($q['prof_name'] ?: 'Não definido')?></span>
+                        </td>
+                        <td class="px-6 py-4">
+                           <span class="font-bold text-gray-700">R$ <?= number_format($q['total'], 2, ',', '.') ?></span>
                         </td>
                         <td class="px-6 py-4">
                             <?php 
@@ -115,6 +139,9 @@ foreach($list as $q) {
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a title="Editar" href="quote_edit.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
                                 <a title="Ver / PDF" href="quote_view.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
                                     <i class="fas fa-file-pdf text-xs"></i>
                                 </a>

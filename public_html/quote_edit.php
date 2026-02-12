@@ -3,6 +3,9 @@ session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php')
 require_once __DIR__.'/../db.php';
 
 $id = $_GET['id'] ?? null;
+$from_calendar = ($_GET['from'] ?? ($_POST['from'] ?? '')) === 'calendar';
+$month_cal = $_GET['month'] ?? ($_POST['month'] ?? '');
+$year_cal = $_GET['year'] ?? ($_POST['year'] ?? '');
 if(!$id){ header('Location: quotes.php'); exit; }
 
 // Fetch the quote
@@ -107,7 +110,11 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           $pdo->commit();
           
           if($action === 'complete'){
-             header('Location: quotes.php?msg=completed'); exit;
+             $redirect = $from_calendar ? 'calendar.php' : 'quotes.php?msg=completed';
+             if ($from_calendar && $month_cal && $year_cal) {
+                 $redirect .= (strpos($redirect, '?') === false ? '?' : '&') . "month=$month_cal&year=$year_cal";
+             }
+             header("Location: $redirect"); exit;
           } else {
              $msg = "Agendamento atualizado com sucesso!";
              // Refresh quote data
@@ -158,10 +165,25 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
 <?php include __DIR__ . '/../views/header.php'; ?>
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<style>
+/* Hide scrollbars for the whole page and forms */
+main::-webkit-scrollbar { display: none !important; }
+main { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+.scrollbar-hide::-webkit-scrollbar { display: none !important; }
+.scrollbar-hide { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+</style>
 
-<div class="max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-slate-800">Editar Agendamento #<?=htmlentities($id)?></h2>
+<div class="w-full py-8">
+    <div class="flex items-center gap-4 mb-6">
+        <?php 
+        $backUrl = ($from_calendar ? 'calendar.php' : 'quotes.php');
+        if ($from_calendar && $month_cal && $year_cal) $backUrl .= (strpos($backUrl, '?') === false ? '?' : '&') . "month=$month_cal&year=$year_cal";
+        ?>
+        <a href="<?= $backUrl ?>" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+            <i class="fas fa-arrow-left text-sm"></i>
+        </a>
+        <h2 class="text-2xl font-bold text-gray-800">Editar Agendamento</h2>
+    </div>
         <?php if($quote['status'] == 'Concluido'): ?>
             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold text-sm">Concluído</span>
         <?php endif; ?>
@@ -182,9 +204,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
     <?php endif; ?>
 
     <form method="post" id="quoteForm" class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <input type="hidden" name="from" value="<?= $from_calendar ? 'calendar' : '' ?>">
+        <input type="hidden" name="month" value="<?= htmlspecialchars($month_cal) ?>">
+        <input type="hidden" name="year" value="<?= htmlspecialchars($year_cal) ?>">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Pessoa</label>
                 <select name="client_id" id="client_id" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                     <?php foreach($clients as $c): ?>
                         <option value="<?=$c['id']?>" <?= $c['id'] == $quote['client_id'] ? 'selected' : '' ?>>
@@ -196,7 +221,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
             
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Profissional</label>
-                <select name="professional_id" id="professional_id" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                <select name="professional_id" id="professional_id" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required onchange="checkAvailability()">
                     <option value="">Selecione...</option>
                     <?php foreach($professionals as $p): ?>
                         <option value="<?=$p['id']?>" <?= $p['id'] == $quote['professional_id'] ? 'selected' : '' ?>>
@@ -206,14 +231,24 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Data e Hora</label>
-                <input type="datetime-local" name="date_time" value="<?= date('Y-m-d\TH:i', strtotime($quote['date_time'])) ?>" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" required>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Data</label>
+                    <input type="date" id="date_select" value="<?= date('Y-m-d', strtotime($quote['date_time'])) ?>" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" required onchange="checkAvailability()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Horário</label>
+                    <select id="time_select" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" required onchange="updateDateTime()">
+                        <?php $currentTime = date('H:i', strtotime($quote['date_time'])); ?>
+                        <option value="<?= $currentTime ?>"><?= $currentTime ?></option>
+                    </select>
+                </div>
             </div>
+            <input type="hidden" name="date_time" id="date_time_input" value="<?= date('Y-m-d\TH:i', strtotime($quote['date_time'])) ?>">
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Observações</label>
-                <textarea name="notes" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" rows="1"><?= htmlspecialchars($quote['notes']) ?></textarea>
+                <textarea name="notes" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700 scrollbar-hide" rows="3"><?= htmlspecialchars($quote['notes']) ?></textarea>
             </div>
         </div>
 
@@ -260,7 +295,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
         <input type="hidden" name="action" id="formAction" value="save">
 
         <div class="flex items-center justify-between pt-6 border-t border-slate-100">
-            <a href="quotes.php" class="bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded hover:bg-slate-50 font-medium transition-colors">Voltar</a>
+            <a href="<?= $backUrl ?>" class="bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded hover:bg-slate-50 font-medium transition-colors">Voltar</a>
             
             <div class="flex gap-4">
                 <?php if($quote['status'] != 'Concluido'): ?>
@@ -283,6 +318,91 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && $error){
 
 <script>
 // Data from PHP
+const currentQuoteId = <?= json_encode($id) ?>;
+const initialDateTime = <?= json_encode($quote['date_time']) ?>;
+const initialTime = new Date(initialDateTime).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+async function checkAvailability() {
+    const profId = document.getElementById('professional_id').value;
+    const date = document.getElementById('date_select').value;
+    const timeSelect = document.getElementById('time_select');
+    
+    if (!profId || !date) {
+        timeSelect.innerHTML = '<option value="">Selecione...</option>';
+        return;
+    }
+    
+    const originalValue = timeSelect.value;
+    timeSelect.innerHTML = '<option value="">Carregando...</option>';
+    
+    try {
+        const response = await fetch(`api/check_availability.php?professional_id=${profId}&date=${date}&exclude_id=${currentQuoteId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        
+        // Generate slots 08:00 to 20:00 every 30 mins
+        const slots = [];
+        for (let h = 8; h <= 20; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                if (h === 20 && m > 0) break;
+                slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+            }
+        }
+        
+        const bookings = (data.bookings || []).map(b => {
+            const start = new Date(b.date_time);
+            const duration = parseInt(b.duration || 30);
+            const end = new Date(start.getTime() + duration * 60000);
+            return { start, end };
+        });
+        
+        // Ensure the current time is also in the slots if not already
+        if (date === initialDateTime.split(' ')[0] && !slots.includes(initialTime)) {
+            slots.push(initialTime);
+            slots.sort();
+        }
+
+        let html = '';
+        slots.forEach(slot => {
+            const slotTime = new Date(`${date}T${slot}:00`);
+            const isBooked = bookings.some(b => slotTime >= b.start && slotTime < b.end);
+            const isInitial = (date === initialDateTime.split(' ')[0] && slot === initialTime);
+            
+            const selected = (slot === originalValue || (originalValue === '' && isInitial)) ? 'selected' : '';
+
+            if (!isBooked || isInitial) {
+                html += `<option value="${slot}" ${selected}>${slot}</option>`;
+            } else {
+                html += `<option value="${slot}" disabled class="bg-gray-100 text-gray-400">${slot} (Ocupado)</option>`;
+            }
+        });
+        
+        timeSelect.innerHTML = html;
+        updateDateTime();
+    } catch (e) {
+        console.error(e);
+        timeSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
+}
+
+function updateDateTime() {
+    const date = document.getElementById('date_select').value;
+    const time = document.getElementById('time_select').value;
+    const input = document.getElementById('date_time_input');
+    if (date && time) {
+        input.value = `${date}T${time}`;
+    }
+}
+
+// Initial check
+document.addEventListener('DOMContentLoaded', () => {
+    checkAvailability();
+});
+
 const itemsData = <?= json_encode($jsItems) ?>;
 const itemsInput = document.getElementById('itemsInput');
 const itemsTable = document.getElementById('itemsTable').querySelector('tbody');

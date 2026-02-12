@@ -60,15 +60,25 @@ $companyId = $_SESSION['company_id'];
 $clients = $pdo->prepare('SELECT id,name,email,phone,company FROM clients WHERE company_id = ? ORDER BY name');
 $clients->execute([$companyId]);
 $clients = $clients->fetchAll();
-$portadores = $pdo->query('SELECT id,nome FROM portadores ORDER BY nome')->fetchAll();
-$contas = $pdo->query('SELECT id,codigo,descricao FROM contas WHERE ativo=1 ORDER BY codigo')->fetchAll();
-$tipos_pagamento = $pdo->query('SELECT id,descricao FROM tipos_pagamento WHERE ativo=1 ORDER BY descricao')->fetchAll();
+$portadores = $pdo->prepare('SELECT id,nome FROM portadores WHERE company_id = ? ORDER BY nome');
+$portadores->execute([$companyId]);
+$portadores = $portadores->fetchAll();
+
+$contas = $pdo->prepare("SELECT id,codigo,descricao,tipo FROM contas WHERE company_id = ? AND ativo=1 ORDER BY codigo");
+$contas->execute([$companyId]);
+$contas = $contas->fetchAll();
+
+$tipos_pagamento = $pdo->prepare('SELECT id,descricao FROM tipos_pagamento WHERE company_id = ? AND ativo=1 ORDER BY descricao');
+$tipos_pagamento->execute([$companyId]);
+$tipos_pagamento = $tipos_pagamento->fetchAll();
 ?>
 <?php include __DIR__ . '/../views/header.php'; ?>
 
 <!-- Tom Select CSS -->
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
   .ts-control {
@@ -178,11 +188,11 @@ $tipos_pagamento = $pdo->query('SELECT id,descricao FROM tipos_pagamento WHERE a
         
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Conta Contábil</label>
-          <select name="conta_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
+          <select name="conta_id" id="conta_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" onchange="checkContaTipo(this)">
             <option value="">-- Selecione --</option>
             <?php foreach($contas as $c): ?>
-              <option value="<?=$c['id']?>" <?= $finance['conta_id']==$c['id'] ? 'selected' : '' ?>>
-                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?>
+              <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" <?= $finance['conta_id']==$c['id'] ? 'selected' : '' ?> class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-slate-50' : '' ?>">
+                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
               </option>
             <?php endforeach; ?>
           </select>
@@ -247,6 +257,24 @@ function updateSituacao() {
   } else {
     situacao.value = '';
   }
+}
+
+function checkContaTipo(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const tipo = selectedOption.getAttribute('data-tipo');
+    
+    if (tipo === 'Sintetica') {
+        Swal.fire({
+            title: 'Atenção!',
+            text: 'Você só pode selecionar uma conta ANALÍTICA dentro do grupo.',
+            icon: 'warning',
+            confirmButtonText: 'Entendi',
+            confirmButtonColor: '#3b82f6'
+        });
+        // Reset to previous value if possible, or clear
+        // Since we don't easily have 'previous value', we just clear it
+        select.value = '';
+    }
 }
 </script>
 

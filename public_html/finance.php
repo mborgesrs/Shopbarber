@@ -5,8 +5,31 @@ require_once __DIR__ . '/../db.php';
 $company_id = $_SESSION['company_id'];
 
 if($_SERVER['REQUEST_METHOD']==='POST'){
-  $stmt=$pdo->prepare('INSERT INTO finance (date,client_id,observation,value,type,company_id) VALUES (?,?,?,?,?,?)');
-  $stmt->execute([$_POST['date'], $_POST['client_id']?:null, $_POST['observation'], $_POST['value'], $_POST['type'], $company_id]);
+  $type = $_POST['type'];
+  $value = $_POST['value'];
+  $saldo_field = $_POST['saldo'] ?: 0;
+  
+  // Business Rule: For 'Pagar' and 'Receber', saldo = value
+  if($type == 'Pagar' || $type == 'Receber') {
+    $saldo_to_save = $value;
+  } else {
+    $saldo_to_save = $saldo_field;
+  }
+
+  $stmt=$pdo->prepare('INSERT INTO finance (date,data_vencimento,client_id,observation,value,saldo,type,portador_id,conta_id,tipo_pagamento_id,company_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+  $stmt->execute([
+    $_POST['date'], 
+    $_POST['data_vencimento']?:null, 
+    $_POST['client_id']?:null, 
+    $_POST['observation'], 
+    $value, 
+    $saldo_to_save,
+    $type, 
+    $_POST['portador_id']?:null,
+    $_POST['conta_id']?:null,
+    $_POST['tipo_pagamento_id']?:null,
+    $company_id
+  ]);
   header('Location: finance.php');exit;
 }
 
@@ -44,6 +67,18 @@ $saldo = $entradas - $saidas;
 $stmt=$pdo->prepare('SELECT id,name FROM clients WHERE company_id=? ORDER BY name');
 $stmt->execute([$company_id]);
 $clients = $stmt->fetchAll();
+
+$portadores = $pdo->prepare('SELECT id,nome FROM portadores WHERE company_id = ? ORDER BY nome');
+$portadores->execute([$company_id]);
+$portadores = $portadores->fetchAll();
+
+$contas = $pdo->prepare("SELECT id,codigo,descricao,tipo FROM contas WHERE company_id = ? AND ativo=1 ORDER BY codigo");
+$contas->execute([$company_id]);
+$contas = $contas->fetchAll();
+
+$tipos_pagamento = $pdo->prepare('SELECT id,descricao FROM tipos_pagamento WHERE company_id = ? AND ativo=1 ORDER BY descricao');
+$tipos_pagamento->execute([$company_id]);
+$tipos_pagamento = $tipos_pagamento->fetchAll();
 ?>
 <?php include __DIR__ . '/../views/header.php'; ?>
 
@@ -97,11 +132,15 @@ $clients = $stmt->fetchAll();
   </h3>
   <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Data</label>
+        <label class="text-xs font-bold text-gray-500 uppercase">Data Lançamento</label>
         <input type="date" name="date" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>">
     </div>
     <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Cliente / Fornecedor</label>
+        <label class="text-xs font-bold text-gray-500 uppercase">Vencimento</label>
+        <input type="date" name="data_vencimento" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>">
+    </div>
+    <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase">Pessoa / Fornecedor</label>
         <select name="client_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
           <option value="">-- Selecione --</option>
           <?php foreach($clients as $c): ?><option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option><?php endforeach; ?>
@@ -109,7 +148,7 @@ $clients = $stmt->fetchAll();
     </div>
     <div class="space-y-1">
         <label class="text-xs font-bold text-gray-500 uppercase">Tipo</label>
-        <select name="type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+        <select name="type" id="main_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" onchange="syncSaldo()">
           <option>Pagar</option><option>Receber</option><option>Entrada</option><option>Saida</option>
         </select>
     </div>
@@ -117,10 +156,42 @@ $clients = $stmt->fetchAll();
         <label class="text-xs font-bold text-gray-500 uppercase">Valor</label>
         <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
-            <input name="value" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            <input name="value" id="main_value" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" oninput="syncSaldo()">
         </div>
     </div>
-    <div class="space-y-1 md:col-span-2">
+    <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase">Saldo</label>
+        <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
+            <input name="saldo" id="main_saldo" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+        </div>
+    </div>
+    <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase">Portador</label>
+        <select name="portador_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+          <option value="">-- Selecione --</option>
+          <?php foreach($portadores as $p): ?><option value="<?=$p['id']?>"><?=htmlspecialchars($p['nome'])?></option><?php endforeach; ?>
+        </select>
+    </div>
+    <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase">Conta Contábil</label>
+        <select name="conta_id" id="main_conta_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" onchange="checkContaTipo(this)">
+          <option value="">-- Selecione --</option>
+          <?php foreach($contas as $c): ?>
+            <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-gray-50' : '' ?>">
+                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
+            </option>
+          <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase">Tipo Pagamento</label>
+        <select name="tipo_pagamento_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+          <option value="">-- Selecione --</option>
+          <?php foreach($tipos_pagamento as $tp): ?><option value="<?=$tp['id']?>"><?=htmlspecialchars($tp['descricao'])?></option><?php endforeach; ?>
+        </select>
+    </div>
+    <div class="space-y-1">
         <label class="text-xs font-bold text-gray-500 uppercase">Observação</label>
         <input name="observation" placeholder="Ex: Pagamento de luz, Venda de produto..." class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
     </div>
@@ -157,9 +228,9 @@ $clients = $stmt->fetchAll();
         </select>
     </div>
     <div class="space-y-1">
-        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Cliente</label>
+        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Pessoa</label>
         <select name="client_id" class="w-full border-gray-100 border p-2 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white">
-            <option value="">Todos os Clientes</option>
+            <option value="">Todas as Pessoas</option>
             <?php foreach($clients as $c): ?>
                 <option value="<?= $c['id'] ?>" <?= $client_id==$c['id']?'selected':'' ?>><?= htmlspecialchars($c['name']) ?></option>
             <?php endforeach; ?>
@@ -188,9 +259,12 @@ $clients = $stmt->fetchAll();
       <thead class="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 tracking-widest font-bold">
         <tr>
           <th class="px-6 py-2 text-left">Data</th>
-          <th class="px-6 py-2 text-left">Cliente / Descrição</th>
+          <th class="px-6 py-2 text-left">Vencimento</th>
+          <th class="px-6 py-2 text-left">Pessoa / Descrição</th>
           <th class="px-6 py-2 text-left">Tipo</th>
+          <th class="px-6 py-2 text-left">Status</th>
           <th class="px-6 py-2 text-left">Valor</th>
+          <th class="px-6 py-2 text-left">Saldo</th>
           <th class="px-6 py-2 text-right">Ações</th>
         </tr>
       </thead>
@@ -205,8 +279,13 @@ $clients = $stmt->fetchAll();
           </td>
           <td class="px-6 py-2">
             <div class="flex flex-col">
-                <span class="text-gray-800 font-bold text-xs"><?= $r['client_name'] ? htmlspecialchars($r['client_name']) : '<span class="text-gray-400 font-normal italic">Sem cliente</span>' ?></span>
-                <span class="text-[11px] text-gray-500 line-clamp-1"><?=htmlspecialchars($r['observation'])?></span>
+                <span class="text-gray-900 font-bold text-xs"><?= $r['data_vencimento'] ? date('d/m/Y', strtotime($r['data_vencimento'])) : '-' ?></span>
+            </div>
+          </td>
+          <td class="px-6 py-2">
+            <div class="flex flex-col">
+                <span class="text-gray-800 font-bold text-xs"><?= $r['client_name'] ? htmlspecialchars($r['client_name']) : '<span class="text-gray-400 font-normal italic">Sem pessoa</span>' ?></span>
+                <span class="text-[11px] text-gray-500 line-clamp-1"><?=htmlspecialchars($r['observation'] ?? '')?></span>
             </div>
           </td>
           <td class="px-6 py-2">
@@ -216,8 +295,29 @@ $clients = $stmt->fetchAll();
             </span>
           </td>
           <td class="px-6 py-2">
-            <span class="text-sm font-bold <?= $r['type'] == 'Pagar' || $r['type'] == 'Saida' ? 'text-rose-600' : 'text-emerald-600' ?>">
-                R$ <?=number_format($r['value'],2,',','.')?>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider <?= $r['status'] == 'Pago' ? 'bg-emerald-50 text-emerald-600' : ($r['status'] == 'Cancelado' ? 'bg-gray-50 text-gray-600' : 'bg-amber-50 text-amber-600') ?>">
+              <?=htmlspecialchars($r['status'])?>
+            </span>
+          </td>
+          <td class="px-6 py-2">
+            <div class="flex flex-col">
+                <span class="text-sm font-bold <?= $r['type'] == 'Pagar' || $r['type'] == 'Saida' ? 'text-rose-600' : 'text-emerald-600' ?>">
+                    R$ <?=number_format($r['value'],2,',','.')?>
+                </span>
+                <?php if($r['status'] !== 'Pago' && ($r['type'] == 'Pagar' || $r['type'] == 'Receber')): ?>
+                    <?php 
+                        $today = date('Y-m-d');
+                        $is_overdue = $r['data_vencimento'] < $today;
+                    ?>
+                    <span class="text-[9px] font-bold uppercase <?= $is_overdue ? 'text-rose-600' : 'text-amber-600' ?>">
+                        (<?= $is_overdue ? 'Titulo Vencido' : 'Titulo Vencer' ?>)
+                    </span>
+                <?php endif; ?>
+            </div>
+          </td>
+          <td class="px-6 py-2">
+            <span class="text-sm font-bold text-blue-600">
+                R$ <?=number_format($r['saldo'] ?? 0,2,',','.')?>
             </span>
           </td>
           <td class="px-6 py-2 text-right">
@@ -237,3 +337,43 @@ $clients = $stmt->fetchAll();
   </div>
 </div>
 <?php include __DIR__ . '/../views/footer.php'; ?>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function syncSaldo() {
+    const type = document.getElementById('main_type').value;
+    const value = document.getElementById('main_value').value;
+    const saldoField = document.getElementById('main_saldo');
+    
+    if (type === 'Pagar' || type === 'Receber') {
+        // Replace comma with dot to ensure it's a valid number for JS, though browser might handle it
+        saldoField.value = value;
+        saldoField.readOnly = true;
+        saldoField.classList.add('bg-gray-50', 'text-gray-500');
+    } else {
+        saldoField.readOnly = false;
+        saldoField.classList.remove('bg-gray-50', 'text-gray-500');
+    }
+}
+
+function checkContaTipo(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const tipo = selectedOption.getAttribute('data-tipo');
+    
+    if (tipo === 'Sintetica') {
+        Swal.fire({
+            title: 'Atenção!',
+            text: 'Você só pode selecionar uma conta ANALÍTICA dentro do grupo.',
+            icon: 'warning',
+            confirmButtonText: 'Entendi',
+            confirmButtonColor: '#4f46e5'
+        });
+        select.value = '';
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', syncSaldo);
+</script>

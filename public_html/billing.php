@@ -29,20 +29,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $pdo->prepare("UPDATE companies SET plan_id = ?, billing_cycle = ? WHERE id = ?")
             ->execute([$plan_id, $cycle, $company_id]);
             
+        // Implementation of Asaas Subscription would go here in a real scenario
+        // For now, let's ensure we update the company data correctly
         $msg = "Plano atualizado com sucesso!";
-        // Refresh company data
-        $stmt->execute([$company_id]);
-        $company = $stmt->fetch();
+        
+        // Refresh company data correctly
+        $stmt_refresh = $pdo->prepare("SELECT * FROM companies WHERE id = ?");
+        $stmt_refresh->execute([$company_id]);
+        $company = $stmt_refresh->fetch();
     }
 }
 
-// Logic to create setup charge if not paid and not exists
-if ($company['setup_paid'] == 0) {
-    $stmt = $pdo->prepare("SELECT id FROM saas_invoices WHERE company_id = ? AND type = 'SETUP' AND status = 'PENDING'");
-    $stmt->execute([$company_id]);
-    if (!$stmt->fetch()) {
-        // Need to create Asaas Charge here... 
-        // This would require the company to have CNPJ/CPF and Email in settings
+// Ensure Asaas Customer exists and handle charges
+$asaas = new Asaas();
+
+// 1. Check/Create Asaas Customer
+if (!$company['asaas_customer_id']) {
+    $stmt_settings = $pdo->prepare("SELECT * FROM settings WHERE company_id = ?");
+    $stmt_settings->execute([$company_id]);
+    $settings = $stmt_settings->fetch();
+
+    if ($settings && $settings['email'] && ($settings['cnpj'] || $settings['cpf'])) {
+        $customer_data = [
+            'name' => $settings['company_name'],
+            'email' => $settings['email'],
+            'cpfCnpj' => $settings['cnpj'] ?: $settings['cpf'],
+            'mobilePhone' => $settings['phone'],
+            'address' => $settings['address'],
+            'postalCode' => $settings['cep'],
+            'externalReference' => (string)$company_id
+        ];
+        
+        $res = $asaas->createCustomer($customer_data);
+        if ($res['code'] === 200 && isset($res['body']['id'])) {
+            $asaas_cust_id = $res['body']['id'];
+            $pdo->prepare("UPDATE companies SET asaas_customer_id = ? WHERE id = ?")->execute([$asaas_cust_id, $company_id]);
+            $company['asaas_customer_id'] = $asaas_cust_id;
+        }
+    }
+}
+
+// 2. Logic to create setup charge if not paid and not exists
+if ($company['setup_paid'] == 0 && $company['asaas_customer_id']) {
+    $stmt_inv = $pdo->prepare("SELECT id FROM saas_invoices WHERE company_id = ? AND type = 'SETUP' AND status = 'PENDING'");
+    $stmt_inv->execute([$company_id]);
+    if (!$stmt_inv->fetch()) {
+        // Create Asaas Charge for Setup (example: R$ 197.00)
+        $setup_amount = 197.00;
+        $payment_data = [
+            'customer' => $company['asaas_customer_id'],
+            'billingType' => 'UNDEFINED',
+            'value' => $setup_amount,
+            'dueDate' => date('Y-m-d', strtotime('+3 days')),
+            'description' => 'Taxa de Implantação - ShopBarber',
+            'externalReference' => 'SETUP_' . $company_id
+        ];
+        
+        $res = $asaas->createPayment($payment_data);
+        if ($res['code'] === 200 && isset($res['body']['id'])) {
+            $pdo->prepare("INSERT INTO saas_invoices (company_id, asaas_id, amount, status, type, due_date, invoice_url, payment_link) VALUES (?,?,?,?,?,?,?,?)")
+                ->execute([
+                    $company_id, 
+                    $res['body']['id'], 
+                    $setup_amount, 
+                    'PENDING', 
+                    'SETUP', 
+                    $res['body']['dueDate'],
+                    $res['body']['invoiceUrl'],
+                    $res['body']['invoiceUrl']
+                ]);
+            // Refresh invoices
+            $stmt_inv_list = $pdo->prepare("SELECT * FROM saas_invoices WHERE company_id = ? ORDER BY created_at DESC");
+            $stmt_inv_list->execute([$company_id]);
+            $invoices = $stmt_inv_list->fetchAll();
+        }
     }
 }
 

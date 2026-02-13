@@ -8,19 +8,55 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 ?>
 <?php include __DIR__.'/../views/header.php'; ?>
-<h2 class="text-xl font-bold mb-4">Nova Pessoa</h2>
-<form method="post" class="bg-white p-4 rounded shadow max-w-lg">
-  <label class="block mb-2">Nome <input name="name" required class="w-full border p-2 rounded"></label>
-  <label class="block mb-2">E-mail <input name="email" class="w-full border p-2 rounded"></label>
-  <label class="block mb-2">Telefone <input name="phone" id="phone" class="w-full border p-2 rounded" maxlength="15" onkeyup="handlePhone(event)"></label>
-  <label class="block mb-2">Empresa <input name="company" class="w-full border p-2 rounded"></label>
-  <label class="block mb-2">Data Nascimento <input type="date" name="date_nascto" class="w-full border p-2 rounded"></label>
-  <label class="block mb-2">Observações <textarea name="notes" class="w-full border p-2 rounded"></textarea></label>
-  <div class="flex items-center gap-2 mt-4">
-    <a href="clients.php" class="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition-colors">Voltar</a>
-    <button class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
-  </div>
-</form>
+
+<div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="clients.php" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+            <i class="fas fa-arrow-left text-sm"></i>
+        </a>
+        <h2 class="text-2xl font-bold text-gray-800">Nova Pessoa</h2>
+    </div>
+
+    <form method="post" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Nome Completo</label>
+                <input name="name" required placeholder="Ex: João Silva" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">E-mail</label>
+                <input name="email" type="email" placeholder="email@exemplo.com" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Telefone</label>
+                <input name="phone" id="phone" placeholder="(00) 00000-0000" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700" maxlength="15" onkeyup="handlePhone(event)">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Empresa</label>
+                <input name="company" placeholder="Nome da empresa (opcional)" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Data de Nascimento</label>
+                <input type="date" name="date_nascto" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Observações</label>
+                <textarea name="notes" placeholder="Alguma observação importante sobre o cliente..." class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700 min-h-[60px]"></textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-6 border-t border-slate-100">
+            <a href="clients.php" class="bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded-xl hover:bg-slate-50 font-medium transition-colors">Voltar</a>
+            <button class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Cadastrar Pessoa</button>
+        </div>
+    </form>
+</div>
+
 <?php include __DIR__.'/../views/footer.php'; ?>
 
 <script>

@@ -2,6 +2,7 @@
 session_start(); 
 if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../lib/accounts.php';
 
 $id = $_GET['id'] ?? null;
 if(!$id){ header('Location: finance.php'); exit; }
@@ -133,6 +134,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
                 $_POST['payment_date'] ?: date('Y-m-d'),
                 $id
             ]);
+            
+            recalculateAccountTotals($_SESSION['company_id'], $pdo);
             
             $pdo->commit();
             

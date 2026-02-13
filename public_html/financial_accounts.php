@@ -46,6 +46,7 @@ $rows = $stmt->fetchAll();
             <th class="px-4 py-1 text-left font-semibold text-slate-600">Descrição</th>
             <th class="px-4 py-1 text-left font-semibold text-slate-600">Tipo</th>
             <th class="px-4 py-1 text-left font-semibold text-slate-600">Status</th>
+            <th class="px-4 py-1 text-right font-semibold text-slate-600">Total</th>
             <th class="px-4 py-1 text-right font-semibold text-slate-600">Ações</th>
         </tr>
     </thead>
@@ -62,6 +63,11 @@ $rows = $stmt->fetchAll();
         <td class="px-4 py-1 text-slate-600 text-[12px]">
             <span class="px-2 py-0.5 text-[10px] rounded <?= $r['ativo'] ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
                 <?= $r['ativo'] ? 'Ativo' : 'Inativo' ?>
+            </span>
+        </td>
+        <td class="px-4 py-1 text-right">
+            <span class="text-[12px] font-bold <?= ($r['total'] ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600' ?>">
+                R$ <?= number_format($r['total'] ?? 0, 2, ',', '.') ?>
             </span>
         </td>
         <td class="px-4 py-1 text-right">

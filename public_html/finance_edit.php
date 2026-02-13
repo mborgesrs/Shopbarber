@@ -2,6 +2,7 @@
 session_start(); 
 if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../lib/accounts.php';
 
 $id = $_GET['id'] ?? null;
 if(!$id){ header('Location: finance.php'); exit; }
@@ -45,6 +46,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       $_SESSION['company_id']
     ]);
     $success = 'Registro atualizado com sucesso!';
+    
+    recalculateAccountTotals($_SESSION['company_id'], $pdo);
     
     // Reload data
     $stmt = $pdo->prepare('SELECT * FROM finance WHERE id = ? AND company_id = ?');

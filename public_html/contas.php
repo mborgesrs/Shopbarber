@@ -43,6 +43,7 @@ $list = $stmt->fetchAll();
                 <th class="px-6 py-2">Código</th>
                 <th class="px-6 py-2">Nome da Conta</th>
                 <th class="px-6 py-2">Tipo</th>
+                <th class="px-6 py-2 text-right">Total</th>
                 <th class="px-6 py-2 text-right">Ações</th>
             </tr>
         </thead>
@@ -62,6 +63,11 @@ $list = $stmt->fetchAll();
                 </td>
                 <td class="px-6 py-2">
                     <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[9px] font-bold uppercase tracking-wider"><?= htmlspecialchars($item['tipo'] ?: 'S/T') ?></span>
+                </td>
+                <td class="px-6 py-2 text-right">
+                    <span class="text-xs font-bold <?= ($item['total'] ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600' ?>">
+                        R$ <?= number_format($item['total'] ?? 0, 2, ',', '.') ?>
+                    </span>
                 </td>
                 <td class="px-6 py-2 text-right">
                     <div class="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

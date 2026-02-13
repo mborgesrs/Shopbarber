@@ -2,6 +2,7 @@
 session_start(); 
 if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../lib/accounts.php';
 
 $id = $_GET['id'] ?? null;
 if(!$id){ header('Location: finance.php'); exit; }
@@ -78,6 +79,8 @@ try {
     // Delete the record
     $stmtDelete = $pdo->prepare('DELETE FROM finance WHERE id = ? AND company_id = ?');
     $stmtDelete->execute([$id, $_SESSION['company_id']]);
+    
+    recalculateAccountTotals($_SESSION['company_id'], $pdo);
     
     $pdo->commit();
     header('Location: finance.php?msg=deleted');

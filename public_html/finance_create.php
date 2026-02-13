@@ -2,6 +2,7 @@
 session_start(); 
 if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../lib/accounts.php';
 
 $error = '';
 $success = '';
@@ -34,6 +35,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       $_POST['data_pagamento']?:null,
       $_SESSION['company_id']
     ]);
+    
+    recalculateAccountTotals($_SESSION['company_id'], $pdo);
     
     header('Location: finance.php');
     exit;

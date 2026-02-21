@@ -1,5 +1,5 @@
       </main>
-      <footer class="px-8 py-4 text-[11px] font-medium text-gray-400 border-t border-gray-50 bg-white/50 backdrop-blur-sm flex-shrink-0">
+      <footer class="px-4 md:px-8 py-4 text-[11px] font-medium text-gray-400 border-t border-gray-50 bg-white/50 backdrop-blur-sm flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
             <?php

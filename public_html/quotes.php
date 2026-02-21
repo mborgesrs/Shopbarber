@@ -138,7 +138,7 @@ foreach($list as $q) {
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                 <a title="Editar" href="quote_edit.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                     <i class="fas fa-edit text-xs"></i>
                                 </a>

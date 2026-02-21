@@ -80,7 +80,7 @@ $totalProducts = count($products);
             <span class="text-gray-700 font-bold text-sm">R$ <?=number_format($p['price'], 2, ',', '.')?></span>
           </td>
           <td class="px-6 py-2 text-right">
-            <div class="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <a title="Editar" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm" href="product_edit.php?id=<?=$p['id']?>">
                 <i class="fas fa-edit text-[10px]"></i>
               </a>

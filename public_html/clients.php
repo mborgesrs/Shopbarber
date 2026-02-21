@@ -77,7 +77,7 @@ $totalClients = count($clients);
 
           </td>
           <td class="px-6 py-2 text-right">
-            <div class="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <a title="Histórico" class="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white transition-all shadow-sm" href="client_history.php?id=<?=$c['id']?>">
                 <i class="fas fa-history text-[10px]"></i>
               </a>

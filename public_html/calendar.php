@@ -67,12 +67,14 @@ foreach ($quotes as $q) {
 </div>
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
-        <?php foreach(['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as $dayName): ?>
-            <div class="py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest"><?= $dayName ?></div>
-        <?php endforeach; ?>
-    </div>
-    <div class="grid grid-cols-7">
+    <div class="overflow-x-auto">
+        <div class="min-w-[700px]">
+            <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
+                <?php foreach(['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as $dayName): ?>
+                    <div class="py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest"><?= $dayName ?></div>
+                <?php endforeach; ?>
+            </div>
+            <div class="grid grid-cols-7">
         <?php
         // Previous month days
         for ($i = 0; $i < $dayFirstOfMonth; $i++) {
@@ -115,6 +117,8 @@ foreach ($quotes as $q) {
             }
         }
         ?>
+            </div>
+        </div>
     </div>
 </div>
 

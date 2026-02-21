@@ -50,9 +50,10 @@ if($current_company_id) {
   </style>
 </head>
 <body class="bg-gray-50 text-gray-600 font-normal antialiased">
+  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden transition-opacity"></div>
   <div class="min-h-screen flex">
     <!-- Sidebar -->
-    <aside class="w-72 bg-white border-r hidden md:block transition-all duration-300">
+    <aside id="main-sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-white border-r transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
       <div class="p-8 pb-6">
         <div class="flex items-center gap-3">
           <?php if($company_logo_url): ?>
@@ -161,6 +162,20 @@ if($current_company_id) {
       </nav>
 
       <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+        }
+
         function toggleMenu(id) {
             const menu = document.getElementById(id);
             const arrow = document.getElementById('arrow-' + id);
@@ -193,8 +208,11 @@ if($current_company_id) {
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
       <!-- Main Header -->
       <header class="bg-white border-b border-gray-100 flex-shrink-0">
-        <div class="px-8 py-4 flex items-center justify-between">
-          <div>
+        <div class="px-4 md:px-8 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-bars text-lg"></i>
+            </button>
             <!-- Breadcrumb or Title placeholder if needed -->
           </div>
           <div class="flex items-center gap-4">
@@ -213,4 +231,4 @@ if($current_company_id) {
       </header>
       
       <!-- Main Content Area -->
-      <main class="flex-1 overflow-y-auto p-8">
+      <main class="flex-1 overflow-y-auto p-4 md:p-8">

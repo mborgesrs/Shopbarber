@@ -24,17 +24,21 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $bairro = $_POST['bairro'] ?? null;
     $cidade = $_POST['cidade'] ?? null;
     $estado = $_POST['estado'] ?? null;
+    $asaas_api_key = $_POST['asaas_api_key'] ?? null;
+    $asaas_environment = $_POST['asaas_environment'] ?? 'sandbox';
     
     // Update text data in settings table
     $stmt = $pdo->prepare("UPDATE settings SET 
         company_name=?, fantasy_name=?, phone=?, email=?, address=?, 
         pix_key_type=?, pix_key=?, pix_merchant_name=?, pix_merchant_city=?, pix_bank_id=?,
-        cnpj=?, cpf=?, cep=?, logradouro=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?
+        cnpj=?, cpf=?, cep=?, logradouro=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?,
+        asaas_api_key=?, asaas_environment=?
         WHERE company_id=?");
     $stmt->execute([
         $company_name, $fantasy_name, $phone, $email, $address, 
         $_POST['pix_key_type'], $_POST['pix_key'], $_POST['pix_merchant_name'], $_POST['pix_merchant_city'], $_POST['pix_bank_id'],
         $cnpj, $cpf, $cep, $logradouro, $numero, $complemento, $bairro, $cidade, $estado,
+        $asaas_api_key, $asaas_environment,
         $company_id
     ]);
 
@@ -255,6 +259,38 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
                         Ver Faturas
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Integração Asaas -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2 font-bold text-sm text-gray-700 uppercase tracking-wider">
+                <i class="fas fa-plug text-blue-600"></i>
+                Integração Asaas
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Chave da API (Access Token)</label>
+                        <div class="relative">
+                            <input type="password" name="asaas_api_key" value="<?= htmlspecialchars($settings['asaas_api_key'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="$a9t$...">
+                            <button type="button" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Ambiente</label>
+                        <select name="asaas_environment" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                            <option value="sandbox" <?= ($settings['asaas_environment']??'')=='sandbox'?'selected':'' ?>>Sandbox (Testes)</option>
+                            <option value="production" <?= ($settings['asaas_environment']??'')=='production'?'selected':'' ?>>Produção (Real)</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-[11px] text-gray-400 italic">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    Esta chave é necessária para processar os pagamentos das mensalidades do seu plano. Você pode obtê-la no painel do Asaas em Configurações > Integrações.
+                </p>
             </div>
         </div>
 

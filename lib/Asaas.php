@@ -4,9 +4,26 @@ class Asaas {
     private $apiKey;
     private $apiUrl;
 
-    public function __construct($apiKey = null, $environment = 'sandbox') {
+    public function __construct($apiKey = null, $environment = null) {
+        if (!$apiKey || !$environment) {
+            // Try to fetch from database if session is active
+            if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['company_id'])) {
+                global $pdo;
+                if (isset($pdo)) {
+                    $stmt = $pdo->prepare("SELECT asaas_api_key, asaas_environment FROM settings WHERE company_id = ? LIMIT 1");
+                    $stmt->execute([$_SESSION['company_id']]);
+                    $settings = $stmt->fetch();
+                    if ($settings) {
+                        if (!$apiKey) $apiKey = $settings['asaas_api_key'];
+                        if (!$environment) $environment = $settings['asaas_environment'];
+                    }
+                }
+            }
+        }
+
         $this->apiKey = $apiKey ?: (defined('ASAAS_API_KEY') ? ASAAS_API_KEY : '');
-        $this->apiUrl = $environment === 'sandbox' ? 'https://sandbox.asaas.com/api/v3' : 'https://www.asaas.com/api/v3';
+        $env = $environment ?: (defined('ASAAS_ENVIRONMENT') ? ASAAS_ENVIRONMENT : 'sandbox');
+        $this->apiUrl = $env === 'sandbox' ? 'https://sandbox.asaas.com/api/v3' : 'https://www.asaas.com/api/v3';
     }
 
     private function request($method, $endpoint, $data = null) {

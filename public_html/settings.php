@@ -62,6 +62,26 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     }
     
     $msg = 'Configurações atualizadas com sucesso!';
+
+    // Asaas Webhook Automation
+    if (!empty($asaas_api_key)) {
+        require_once __DIR__ . '/../lib/Asaas.php';
+        $asaas = new Asaas($asaas_api_key, $asaas_environment);
+        
+        // Protocol + Domain for Webhook URL
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $domain = $_SERVER['HTTP_HOST'];
+        $webhook_url = $protocol . $domain . "/webhooks/asaas.php";
+        
+        $res = $asaas->getWebhook();
+        if ($res['code'] === 200) {
+            $existing = $res['body'];
+            // If webhook doesn't exist or URL is different, create/update
+            if (!isset($existing['url']) || $existing['url'] !== $webhook_url) {
+                $asaas->createWebhook($webhook_url, $email ?: 'suporte@shopbarber.com.br');
+            }
+        }
+    }
 }
 
 $stmt = $pdo->prepare("SELECT * FROM settings WHERE company_id = ? LIMIT 1");
@@ -287,10 +307,43 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
                         </select>
                     </div>
                 </div>
+                
+                <div class="flex items-center gap-3">
+                    <button type="button" id="btnTestAsaas" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-2">
+                        <i class="fas fa-sync-alt" id="iconTestAsaas"></i>
+                        Testar Conexão
+                    </button>
+                    <span id="testResult" class="text-[10px] font-bold"></span>
+                </div>
+
                 <p class="text-[11px] text-gray-400 italic">
                     <i class="fas fa-info-circle mr-1"></i> 
                     Esta chave é necessária para processar os pagamentos das mensalidades do seu plano. Você pode obtê-la no painel do Asaas em Configurações > Integrações.
                 </p>
+                <?php
+                // Check webhook status if API key exists
+                if (!empty($settings['asaas_api_key'])):
+                    require_once __DIR__ . '/../lib/Asaas.php';
+                    $asaas = new Asaas($settings['asaas_api_key'], $settings['asaas_environment']);
+                    $wh = $asaas->getWebhook();
+                    if ($wh['code'] === 200 && !empty($wh['body']['url'])):
+                ?>
+                    <div class="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3">
+                        <i class="fas fa-check-circle text-emerald-500"></i>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-emerald-700">Webhook Configurado</p>
+                            <p class="text-[10px] text-emerald-600">O Asaas está conectado e enviando notificações para: <code class="bg-emerald-100/50 px-1 rounded"><?= htmlspecialchars($wh['body']['url']) ?></code></p>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-3">
+                        <i class="fas fa-exclamation-circle text-amber-500"></i>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-amber-700">Webhook Não Detectado</p>
+                            <p class="text-[10px] text-amber-600">Salve as configurações para tentar configurar automaticamente ou verifique sua chave API.</p>
+                        </div>
+                    </div>
+                <?php endif; endif; ?>
             </div>
         </div>
 
@@ -339,6 +392,55 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.readAsDataURL(this.files[0]);
         }
     });
+
+    // Test Asaas Connection
+    const btnTest = document.getElementById('btnTestAsaas');
+    const iconTest = document.getElementById('iconTestAsaas');
+    const testResult = document.getElementById('testResult');
+
+    if (btnTest) {
+        btnTest.addEventListener('click', function() {
+            const apiKey = document.querySelector('input[name="asaas_api_key"]').value;
+            const env = document.querySelector('select[name="asaas_environment"]').value;
+            
+            if (!apiKey) {
+                alert('Informe a chave da API primeiro.');
+                return;
+            }
+
+            btnTest.disabled = true;
+            iconTest.classList.add('fa-spin');
+            testResult.innerText = ' Testando...';
+            testResult.className = 'text-[10px] font-bold text-gray-400';
+
+            const formData = new FormData();
+            formData.append('api_key', apiKey);
+            formData.append('env', env);
+
+            fetch('api/asaas_test.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                btnTest.disabled = false;
+                iconTest.classList.remove('fa-spin');
+                if (data.success) {
+                    testResult.innerText = ' ✓ ' + data.message + ' (Conta: ' + data.data.name + ')';
+                    testResult.className = 'text-[10px] font-bold text-emerald-600';
+                } else {
+                    testResult.innerText = ' ✗ ' + data.message;
+                    testResult.className = 'text-[10px] font-bold text-rose-600';
+                }
+            })
+            .catch(err => {
+                btnTest.disabled = false;
+                iconTest.classList.remove('fa-spin');
+                testResult.innerText = ' ✗ Erro na comunicação com o servidor.';
+                testResult.className = 'text-[10px] font-bold text-rose-600';
+            });
+        });
+    }
 });
 </script>
 

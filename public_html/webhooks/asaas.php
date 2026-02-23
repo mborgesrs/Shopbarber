@@ -13,7 +13,8 @@ $data = json_decode($body, true);
 $event = $data['event'] ?? '';
 
 // For security, you should verify if it's really from Asaas (e.g., checking a secret token header)
-// but for simplicity here we'll just process.
+// Asaas sends a 'asaas-access-token' header if configured in the webhook setup.
+// For now, we allow the request to proceed for implementation simplicity.
 
 if (in_array($event, ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'])) {
     $payment = $data['payment'];

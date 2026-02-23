@@ -32,7 +32,8 @@ class Asaas {
         
         $headers = [
             'Content-Type: application/json',
-            'access_token: ' . $this->apiKey
+            'access_token: ' . $this->apiKey,
+            'User-Agent: ShopBarber/1.0'
         ];
 
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -46,11 +47,16 @@ class Asaas {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        $errno = curl_errno($ch);
         curl_close($ch);
 
         return [
             'code' => $httpCode,
-            'body' => json_decode($response, true)
+            'body' => json_decode($response, true),
+            'raw' => $response,
+            'curl_error' => $error,
+            'curl_errno' => $errno
         ];
     }
 
@@ -72,6 +78,14 @@ class Asaas {
 
     public function getSubscription($id) {
         return $this->request('GET', '/subscriptions/' . $id);
+    }
+
+    public function getAccountInfo() {
+        return $this->request('GET', '/myAccount');
+    }
+
+    public function getWebhook() {
+        return $this->request('GET', '/webhook');
     }
 
     public function createWebhook($url, $email, $apiVersion = 3) {

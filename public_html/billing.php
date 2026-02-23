@@ -18,6 +18,12 @@ $stmt = $pdo->prepare("SELECT * FROM saas_invoices WHERE company_id = ? ORDER BY
 $stmt->execute([$company_id]);
 $invoices = $stmt->fetchAll();
 
+// Fetch Asaas settings for simulation check
+$stmt_as = $pdo->prepare("SELECT asaas_environment FROM settings WHERE company_id = ?");
+$stmt_as->execute([$company_id]);
+$as_settings = $stmt_as->fetch();
+$is_sandbox = ($as_settings['asaas_environment'] ?? 'sandbox') === 'sandbox';
+
 $msg = '';
 $err = '';
 
@@ -37,7 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt_refresh = $pdo->prepare("SELECT * FROM companies WHERE id = ?");
         $stmt_refresh->execute([$company_id]);
         $company = $stmt_refresh->fetch();
+        
+        header("Location: billing.php?msg=success");
+        exit;
     }
+}
+
+if (isset($_GET['msg']) && $_GET['msg'] === 'success') {
+    $msg = "Plano atualizado com sucesso!";
 }
 
 // Ensure Asaas Customer exists and handle charges
@@ -168,46 +181,50 @@ include __DIR__ . '/../views/header.php';
                 <div class="p-6 border-b border-gray-50 flex items-center justify-between">
                     <h3 class="font-bold text-gray-800">Planos Disponíveis</h3>
                     <div class="flex bg-gray-50 p-1 rounded-xl">
-                        <button class="px-4 py-1.5 text-xs font-bold rounded-lg bg-white shadow-sm text-gray-700">Mensal</button>
-                        <button class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">Anual <span class="bg-emerald-100 text-emerald-600 px-1 rounded">-20%</span></button>
+                        <button type="button" onclick="setCycle('monthly')" id="btn-monthly" class="cycle-btn active px-4 py-1.5 text-xs font-bold rounded-lg bg-white shadow-sm text-gray-700">Mensal</button>
+                        <button type="button" onclick="setCycle('yearly')" id="btn-yearly" class="cycle-btn px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">Anual <span class="bg-emerald-100 text-emerald-600 px-1 rounded">-20%</span></button>
                     </div>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="border-2 <?= $company['plan_id'] === 'monthly_79' ? 'border-indigo-500 bg-indigo-50/20' : 'border-gray-50' ?> rounded-2xl p-4 relative">
-                        <?php if($company['plan_id'] === 'monthly_79'): ?>
+                    <div class="border-2 <?= ($company['plan_id'] === 'essencial') ? 'border-indigo-500 bg-indigo-50/20' : 'border-gray-50' ?> rounded-2xl p-4 relative plan-card" id="card-essencial">
+                        <?php if($company['plan_id'] === 'essencial'): ?>
                             <span class="absolute -top-3 -right-3 bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">ATUAL</span>
                         <?php endif; ?>
                         <h4 class="font-bold text-gray-800">Essencial</h4>
                         <p class="text-xs text-gray-400 mb-4">Ideal para barbeiros individuais.</p>
                         <div class="flex items-baseline gap-1 mb-4">
                             <span class="text-sm font-bold text-gray-400 italic">R$</span>
-                            <span class="text-3xl font-bold text-gray-800">79</span>
-                            <span class="text-sm text-gray-400">/mês</span>
+                            <span class="text-3xl font-bold text-gray-800" id="price-essencial">79</span>
+                            <span class="text-sm text-gray-400" id="cycle-essencial">/mês</span>
                         </div>
                         <form method="POST">
                             <input type="hidden" name="action" value="select_plan">
-                            <input type="hidden" name="plan_id" value="monthly_79">
-                            <input type="hidden" name="billing_cycle" value="monthly">
-                            <button class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all">Selecionar</button>
+                            <input type="hidden" name="plan_id" value="essencial">
+                            <input type="hidden" name="billing_cycle" value="monthly" class="cycle-input">
+                            <button type="submit" class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all btn-plan" id="btn-plan-essencial">
+                                <?= ($company['plan_id'] === 'essencial' && $company['billing_cycle'] === 'monthly') ? 'Plano Atual' : 'Selecionar' ?>
+                            </button>
                         </form>
                     </div>
 
-                    <div class="border-2 <?= $company['plan_id'] === 'monthly_149' ? 'border-indigo-500 bg-indigo-50/20' : 'border-gray-50' ?> rounded-2xl p-4 relative">
-                        <?php if($company['plan_id'] === 'monthly_149'): ?>
+                    <div class="border-2 <?= ($company['plan_id'] === 'professional') ? 'border-indigo-500 bg-indigo-50/20' : 'border-gray-50' ?> rounded-2xl p-4 relative plan-card" id="card-professional">
+                        <?php if($company['plan_id'] === 'professional'): ?>
                             <span class="absolute -top-3 -right-3 bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">ATUAL</span>
                         <?php endif; ?>
                         <h4 class="font-bold text-gray-800">Professional</h4>
                         <p class="text-xs text-gray-400 mb-4">Para equipes e barbearias maiores.</p>
                         <div class="flex items-baseline gap-1 mb-4">
                             <span class="text-sm font-bold text-gray-400 italic">R$</span>
-                            <span class="text-3xl font-bold text-gray-800">149</span>
-                            <span class="text-sm text-gray-400">/mês</span>
+                            <span class="text-3xl font-bold text-gray-800" id="price-professional">149</span>
+                            <span class="text-sm text-gray-400" id="cycle-professional">/mês</span>
                         </div>
                         <form method="POST">
                             <input type="hidden" name="action" value="select_plan">
-                            <input type="hidden" name="plan_id" value="monthly_149">
-                            <input type="hidden" name="billing_cycle" value="monthly">
-                            <button class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-100">Atualizar</button>
+                            <input type="hidden" name="plan_id" value="professional">
+                            <input type="hidden" name="billing_cycle" value="monthly" class="cycle-input">
+                            <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-100 btn-plan" id="btn-plan-professional">
+                                <?= ($company['plan_id'] === 'professional' && $company['billing_cycle'] === 'monthly') ? 'Plano Atual' : 'Atualizar' ?>
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -248,7 +265,14 @@ include __DIR__ . '/../views/header.php';
                                     </td>
                                     <td class="px-6 py-4">
                                         <?php if($inv['status'] !== 'PAID'): ?>
-                                            <a href="<?= $inv['invoice_url'] ?>" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-bold">Pagar</a>
+                                            <div class="flex items-center gap-3">
+                                                <a href="<?= $inv['invoice_url'] ?>" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-bold">Pagar</a>
+                                                <?php if($is_sandbox): ?>
+                                                    <button onclick="simulateWebhook(<?= $inv['id'] ?>)" class="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-lg font-bold hover:bg-amber-100 transition-colors">
+                                                        <i class="fas fa-vial mr-1"></i>Simular Pagamento
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
                                         <?php else: ?>
                                             <span class="text-gray-300">Concluído</span>
                                         <?php endif; ?>
@@ -266,6 +290,88 @@ include __DIR__ . '/../views/header.php';
             </div>
         </div>
     </div>
+    </div>
 </div>
+
+<style>
+.cycle-btn.active {
+    background-color: white;
+    color: #374151; /* gray-700 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+</style>
+
+<script>
+const currentPlan = "<?= $company['plan_id'] ?>";
+const currentCycle = "<?= $company['billing_cycle'] ?>";
+
+function setCycle(cycle) {
+    const btnMonthly = document.getElementById('btn-monthly');
+    const btnYearly = document.getElementById('btn-yearly');
+    const priceEssencial = document.getElementById('price-essencial');
+    const priceProfessional = document.getElementById('price-professional');
+    const cycleEssencial = document.getElementById('cycle-essencial');
+    const cycleProfessional = document.getElementById('cycle-professional');
+    const cycleInputs = document.querySelectorAll('.cycle-input');
+    
+    const btnEssencial = document.getElementById('btn-plan-essencial');
+    const btnProfessional = document.getElementById('btn-plan-professional');
+
+    if (cycle === 'monthly') {
+        btnMonthly.classList.add('bg-white', 'shadow-sm', 'text-gray-700');
+        btnMonthly.classList.remove('text-gray-400');
+        btnYearly.classList.remove('bg-white', 'shadow-sm', 'text-gray-700');
+        btnYearly.classList.add('text-gray-400');
+
+        priceEssencial.innerText = '79';
+        priceProfessional.innerText = '149';
+        cycleEssencial.innerText = '/mês';
+        cycleProfessional.innerText = '/mês';
+        
+        btnEssencial.innerText = (currentPlan === 'essencial' && currentCycle === 'monthly') ? 'Plano Atual' : 'Selecionar';
+        btnProfessional.innerText = (currentPlan === 'professional' && currentCycle === 'monthly') ? 'Plano Atual' : 'Atualizar';
+    } else {
+        btnYearly.classList.add('bg-white', 'shadow-sm', 'text-gray-700');
+        btnYearly.classList.remove('text-gray-400');
+        btnMonthly.classList.remove('bg-white', 'shadow-sm', 'text-gray-700');
+        btnMonthly.classList.add('text-gray-400');
+
+        priceEssencial.innerText = '758';
+        priceProfessional.innerText = '1430';
+        cycleEssencial.innerText = '/ano';
+        cycleProfessional.innerText = '/ano';
+        
+        btnEssencial.innerText = (currentPlan === 'essencial' && currentCycle === 'yearly') ? 'Plano Atual' : 'Selecionar';
+        btnProfessional.innerText = (currentPlan === 'professional' && currentCycle === 'yearly') ? 'Plano Atual' : 'Atualizar';
+    }
+
+    cycleInputs.forEach(input => {
+        input.value = cycle;
+    });
+}
+function simulateWebhook(invoiceId) {
+    if (!confirm('Deseja simular o aviso de pagamento do Asaas para esta fatura? Isso acionará o seu Webhook local.')) return;
+    
+    const formData = new FormData();
+    formData.append('invoice_id', invoiceId);
+    
+    fetch('api/asaas_simulate_webhook.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erro: ' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('Erro ao processar simulação.');
+    });
+}
+</script>
 
 <?php include __DIR__ . '/../views/footer.php'; ?>

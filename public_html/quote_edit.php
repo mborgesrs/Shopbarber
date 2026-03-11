@@ -85,6 +85,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           $stmt=$pdo->prepare($sqlUpd);
           $stmt->execute([$client_id, $professional_id, $date_time, $endStr, $total, $notes, $durationCtx, $status, $id]);
           
+          // --- INVENTORY CONTROL (REVERSAL) ---
+          // Fetch existing items to "return" their stock before updating
+          $oldItemsSt = $pdo->prepare("SELECT product_id, quantity FROM quote_items WHERE quote_id = ?");
+          $oldItemsSt->execute([$id]);
+          $oldItems = $oldItemsSt->fetchAll();
+          foreach($oldItems as $oi) {
+              $pst = $pdo->prepare("SELECT type FROM products WHERE id = ?");
+              $pst->execute([$oi['product_id']]);
+              if ($pst->fetchColumn() === 'Ativo') {
+                  $upd = $pdo->prepare("UPDATE products SET balance = balance + ? WHERE id = ?");
+                  $upd->execute([$oi['quantity'], $oi['product_id']]);
+              }
+          }
+
           // Update Items
           $pdo->prepare('DELETE FROM quote_items WHERE quote_id=?')->execute([$id]);
           $stmtItem=$pdo->prepare('INSERT INTO quote_items (quote_id,product_id,quantity,price,total,duration) VALUES (?,?,?,?,?,?)');
@@ -95,6 +109,18 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             $lineTotal = $price * $qty;
             $lineDur = $pDict[$pid]['duration'] ?? 30;
             $stmtItem->execute([$id, $pid, $qty, $price, $lineTotal, $lineDur]);
+
+            // --- INVENTORY CONTROL (DEDUCTION) ---
+            $pst = $pdo->prepare("SELECT type FROM products WHERE id = ?");
+            $pst->execute([$pid]);
+            if ($pst->fetchColumn() === 'Ativo') {
+                $upd = $pdo->prepare("UPDATE products SET balance = balance - ? WHERE id = ?");
+                $upd->execute([$qty, $pid]);
+                
+                // Record movement for update
+                $mov = $pdo->prepare("INSERT INTO inventory_movements (company_id, product_id, date, supplier, quantity, price, type) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $mov->execute([$_SESSION['company_id'], $pid, date('Y-m-d'), 'Ajuste Agendamento #' . $id, $qty, $price, 'Saída (Ajuste Atendimento)']);
+            }
           }
 
           // Generate Finance if completing

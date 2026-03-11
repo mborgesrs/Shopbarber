@@ -90,6 +90,7 @@ if($current_company_id) {
             <div id="menu-cadastros" class="hidden pl-8 space-y-1 mt-1">
                 <a href="/clients.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Pessoas</a>
                 <a href="/products.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Produtos</a>
+                <a href="/inventory.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Estoque</a>
             </div>
         </div>
 

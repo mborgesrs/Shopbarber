@@ -52,14 +52,40 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       }
   }
   
-  $stmt=$pdo->prepare('INSERT INTO quotes (client_id,professional_id,date_time,end_time,total,status,notes,duration,company_id) VALUES (?,?,?,?,?,?,?,?,?)');
-  $stmt->execute([$client_id,$professional_id,$date_time,$endStr,$total,'Confirmado',$notes, $duration, $company_id]);
-  $id = $pdo->lastInsertId();
-  
-  foreach($items_array as $it){
-    $st=$pdo->prepare('INSERT INTO quote_items (quote_id,product_id,quantity,price,total,duration) VALUES (?,?,?,?,?,?)');
-    $d = $prodMap[$it['product_id']] ?? 30;
-    $st->execute([$id,$it['product_id'],$it['qty'],$it['price'],($it['price']*$it['qty']),$d]);
+  try {
+      $pdo->beginTransaction();
+      
+      $stmt=$pdo->prepare('INSERT INTO quotes (client_id,professional_id,date_time,end_time,total,status,notes,duration,company_id) VALUES (?,?,?,?,?,?,?,?,?)');
+      $stmt->execute([$client_id,$professional_id,$date_time,$endStr,$total,'Confirmado',$notes, $duration, $company_id]);
+      $id = $pdo->lastInsertId();
+      
+      foreach($items_array as $it){
+        $st=$pdo->prepare('INSERT INTO quote_items (quote_id,product_id,quantity,price,total,duration) VALUES (?,?,?,?,?,?)');
+        $d = $prodMap[$it['product_id']] ?? 30;
+        $st->execute([$id,$it['product_id'],$it['qty'],$it['price'],($it['price']*$it['qty']),$d]);
+        
+        // --- INVENTORY CONTROL ---
+        // Fetch product type to see if we should deduct stock
+        $pst = $pdo->prepare("SELECT type FROM products WHERE id = ?");
+        $pst->execute([$it['product_id']]);
+        $pType = $pst->fetchColumn();
+        
+        if ($pType === 'Ativo') {
+            // 1. Deduct from balance
+            $upd = $pdo->prepare("UPDATE products SET balance = balance - ? WHERE id = ?");
+            $upd->execute([$it['qty'], $it['product_id']]);
+            
+            // 2. Record movement
+            $mov = $pdo->prepare("INSERT INTO inventory_movements (company_id, product_id, date, supplier, quantity, price, type) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $mov->execute([$company_id, $it['product_id'], date('Y-m-d'), 'Atendimento #' . $id, $it['qty'], $it['price'], 'Saída (Atendimento)']);
+        }
+      }
+      
+      $pdo->commit();
+  } catch (Exception $e) {
+      $pdo->rollBack();
+      echo "<script>alert('Erro ao gravar agendamento: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";
+      exit;
   }
   
   $send = isset($_POST['send_whatsapp']);

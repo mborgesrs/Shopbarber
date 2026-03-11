@@ -56,7 +56,9 @@ $totalProducts = count($products);
       <thead class="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 tracking-widest font-bold">
         <tr>
           <th class="px-6 py-2 text-left">Descrição</th>
+          <th class="px-6 py-2 text-left">Tipo</th>
           <th class="px-6 py-2 text-left">Preço</th>
+          <th class="px-6 py-2 text-left">Saldo</th>
           <th class="px-6 py-2 text-right">Ações</th>
         </tr>
       </thead>
@@ -77,7 +79,19 @@ $totalProducts = count($products);
             </div>
           </td>
           <td class="px-6 py-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?= $p['type'] === 'Ativo' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800' ?>">
+              <?= $p['type'] ?>
+            </span>
+          </td>
+          <td class="px-6 py-2">
             <span class="text-gray-700 font-bold text-sm">R$ <?=number_format($p['price'], 2, ',', '.')?></span>
+          </td>
+          <td class="px-6 py-2">
+            <?php if($p['type'] === 'Ativo'): ?>
+              <span class="text-gray-700 font-bold text-sm"><?= number_format($p['balance'], 2, ',', '.') ?> <span class="text-[10px] text-gray-400 font-normal"><?= htmlspecialchars($p['unit']) ?></span></span>
+            <?php else: ?>
+              <span class="text-gray-400 italic text-xs">-</span>
+            <?php endif; ?>
           </td>
           <td class="px-6 py-2 text-right">
             <div class="flex justify-end gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">

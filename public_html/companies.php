@@ -5,23 +5,15 @@ require_once __DIR__.'/../db.php';
 $companyId = $_SESSION['company_id'];
 $q = $_GET['q'] ?? '';
 
-// Check if user is "superadmin" or similar? 
-// For now, following the pattern of the other list pages which show what the user has access to.
-// If the user is just a standard user, they might only see their own company. 
-// However, the request specifically asked for a LIST of companies.
-$sql = 'SELECT * FROM companies WHERE 1=1';
-$params = [];
+// Filter to show the company itself or companies that have it as parent_company_id
+$sql = 'SELECT * FROM companies WHERE (id = ? OR parent_company_id = ?)';
+$params = [$companyId, $companyId];
 
 if($q){
-    $sql .= ' AND (name LIKE ? OR fantasy_name LIKE ? OR document LIKE ?)';
-    $params = ["%$q%", "%$q%", "%$q%"];
+    $sql .= ' AND (name LIKE ? OR fantasy_name LIKE ? OR document LIKE ? OR cpf LIKE ?)';
+    $params = array_merge($params, ["%$q%", "%$q%", "%$q%", "%$q%"]);
 }
 
-// Security: If not admin, maybe restrict to their own? 
-// Based on line 9 of the previous version, it was restricted.
-// But "listing companies" usually implies an admin view.
-// I'll keep the restriction for now unless it's a search.
-// Actually, let's just make it a general list for companies.
 $sql .= ' ORDER BY name ASC';
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -55,7 +47,8 @@ $companies = $stmt->fetchAll();
     <thead class="bg-slate-50 border-b border-slate-100">
         <tr>
             <th class="px-4 py-1 text-left font-semibold text-slate-600 text-sm">Nome / Razão Social</th>
-            <th class="px-4 py-1 text-left font-semibold text-slate-600 text-sm">Documento</th>
+            <th class="px-4 py-1 text-left font-semibold text-slate-600 text-sm">Divisão</th>
+            <th class="px-4 py-1 text-left font-semibold text-slate-600 text-sm">Doc / CPF</th>
             <th class="px-4 py-1 text-left font-semibold text-slate-600 text-sm">Status</th>
             <th class="px-4 py-1 text-right font-semibold text-slate-600 text-sm">Ações</th>
         </tr>
@@ -67,7 +60,13 @@ $companies = $stmt->fetchAll();
             <div class="font-medium text-slate-800 text-[13px]"><?=htmlspecialchars($comp['name'])?></div>
             <div class="text-slate-500 text-[11px]"><?=htmlspecialchars($comp['fantasy_name'] ?: '-')?></div>
         </td>
-        <td class="px-4 py-1 text-slate-600 text-[12px]"><?=htmlspecialchars($comp['document'] ?: '-')?></td>
+        <td class="px-4 py-1">
+            <span class="text-slate-600 text-[12px]"><?=htmlspecialchars($comp['division'] ?: 'Outros')?></span>
+        </td>
+        <td class="px-4 py-1">
+            <div class="text-slate-600 text-[12px]"><?=htmlspecialchars($comp['document'] ?: '-')?></div>
+            <div class="text-slate-400 text-[10px]"><?=htmlspecialchars($comp['cpf'] ?: '')?></div>
+        </td>
         <td class="px-4 py-1">
             <?php if($comp['status'] == 'active'): ?>
                 <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">ATIVO</span>

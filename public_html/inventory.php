@@ -8,25 +8,65 @@ $company_id = $_SESSION['company_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'move') {
     $product_id = $_POST['product_id'];
     $date = $_POST['date'];
-    $supplier = $_POST['supplier'] ?? '';
+    
+    $supplier_raw = $_POST['supplier_id'] ?? '';
+    $supplier_id = null;
+    $supplier_type = 'company';
+    if (!empty($supplier_raw) && strpos($supplier_raw, ':') !== false) {
+        list($type_prefix, $id_val) = explode(':', $supplier_raw);
+        $supplier_id = (int)$id_val;
+        $supplier_type = ($type_prefix === 'clie') ? 'client' : 'company';
+    }
+
+    $invoice_number = $_POST['invoice_number'] ?? '';
+    $invoice_series = $_POST['invoice_series'] ?? '';
     $quantity = $_POST['quantity'];
     $price = $_POST['price'] ?? 0;
+    $total_price = $quantity * $price;
     $type = $_POST['type']; // especie: Entrada, Saída, Consumo...
 
     try {
         $pdo->beginTransaction();
 
-        // 1. Record Movement
-        $stmt = $pdo->prepare("INSERT INTO inventory_movements (company_id, product_id, date, supplier, quantity, price, type) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$company_id, $product_id, $date, $supplier, $quantity, $price, $type]);
+        // 0. Fetch Current Product State
+        $stmt = $pdo->prepare("SELECT balance, pr_medio FROM products WHERE id = ? AND company_id = ?");
+        $stmt->execute([$product_id, $company_id]);
+        $product = $stmt->fetch();
 
-        // 2. Update Product Balance
-        // If it's "Entrada", we add. If it's "Saída" or "Consumo", we subtract.
-        // For custom types, user should decide, but usually anything other than "Entrada" is a reduction in this salon context.
+        if (!$product) throw new Exception("Produto não encontrado.");
+
+        $old_balance = $product['balance'];
+        $old_pr_medio = $product['pr_medio'];
+
+        // 1. Record Movement
+        $stmt = $pdo->prepare("INSERT INTO inventory_movements (company_id, product_id, date, supplier_id, supplier_type, quantity, price, total_price, type, invoice_number, invoice_series) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$company_id, $product_id, $date, $supplier_id, $supplier_type, $quantity, $price, $total_price, $type, $invoice_number, $invoice_series]);
+
+        // 2. Update Product Balance and Average Price
         $adj = ($type === 'Entrada') ? $quantity : -$quantity;
+        $new_balance = $old_balance + $adj;
         
-        $stmt = $pdo->prepare("UPDATE products SET balance = balance + ? WHERE id = ? AND company_id = ?");
-        $stmt->execute([$adj, $product_id, $company_id]);
+        $update_data = [$new_balance];
+        $sql_update = "balance = ?";
+
+        if ($type === 'Entrada') {
+            // New Average Price: ((old_qty * old_pr_medio) + (new_qty * entry_price)) / (old_qty + new_qty)
+            // But if old_balance + entry_qty <= 0 we shouldn't divide or just use the new entry price
+            if ($new_balance > 0) {
+                $new_pr_medio = (($old_balance * $old_pr_medio) + ($quantity * $price)) / $new_balance;
+            } else {
+                $new_pr_medio = $price;
+            }
+            $sql_update .= ", pr_medio = ?, pr_custo = ?";
+            $update_data[] = $new_pr_medio;
+            $update_data[] = $price;
+        }
+
+        $update_data[] = $product_id;
+        $update_data[] = $company_id;
+
+        $stmt = $pdo->prepare("UPDATE products SET $sql_update WHERE id = ? AND company_id = ?");
+        $stmt->execute($update_data);
 
         $pdo->commit();
         $_SESSION['success'] = "Movimentação registrada com sucesso!";
@@ -38,15 +78,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Fetch Ativo Products for dropdown
-$stmt = $pdo->prepare("SELECT id, name, unit, balance FROM products WHERE company_id = ? AND type = 'Ativo' ORDER BY name");
+$stmt = $pdo->prepare("SELECT id, name, unit, balance, pr_medio FROM products WHERE company_id = ? AND type = 'Ativo' ORDER BY name");
 $stmt->execute([$company_id]);
 $products = $stmt->fetchAll();
 
+// Fetch Suppliers from BOTH Companies and Clients
+$suppliers = [];
+
+// From Companies
+$stmt = $pdo->prepare("SELECT id, name, 'comp' as type_prefix FROM companies WHERE (id = ? OR parent_company_id = ?) AND division = 'Fornecedores' ORDER BY name");
+$stmt->execute([$company_id, $company_id]);
+$comp_suppliers = $stmt->fetchAll();
+
+// From Clients
+$stmt = $pdo->prepare("SELECT id, name, 'clie' as type_prefix FROM clients WHERE company_id = ? AND division = 'Fornecedores' ORDER BY name");
+$stmt->execute([$company_id]);
+$clie_suppliers = $stmt->fetchAll();
+
+$suppliers = array_merge($comp_suppliers, $clie_suppliers);
+// Sort merged array by name
+usort($suppliers, function($a, $b) {
+    return strcasecmp($a['name'], $b['name']);
+});
+
 // Fetch Recent Movements
 $stmt = $pdo->prepare("
-    SELECT m.*, p.name as product_name, p.unit 
+    SELECT m.*, p.name as product_name, p.unit, 
+           CASE 
+               WHEN m.supplier_type = 'client' THEN cli.name 
+               ELSE comp.name 
+           END as supplier_name
     FROM inventory_movements m 
     JOIN products p ON m.product_id = p.id 
+    LEFT JOIN companies comp ON m.supplier_id = comp.id AND m.supplier_type = 'company'
+    LEFT JOIN clients cli ON m.supplier_id = cli.id AND m.supplier_type = 'client'
     WHERE m.company_id = ? 
     ORDER BY m.date DESC, m.created_at DESC 
     LIMIT 50
@@ -62,6 +127,10 @@ $movements = $stmt->fetchAll();
         <h2 class="text-xl font-bold text-gray-800">Controle de Estoque</h2>
         <p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Movimentação de Materiais</p>
     </div>
+    <a href="dashboard.php" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all shadow-sm">
+        <i class="fas fa-arrow-left"></i>
+        Voltar ao Início
+    </a>
 </div>
 
 <?php if(isset($_SESSION['success'])): ?>
@@ -132,17 +201,38 @@ $movements = $stmt->fetchAll();
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Quantidade</label>
-                        <input type="number" step="0.01" name="quantity" required class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="number" step="0.01" name="quantity" id="move_qty" required oninput="calcTotal()" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Preço Unit.</label>
-                        <input type="number" step="0.01" name="price" value="0.00" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="number" step="0.01" name="price" id="move_price" value="0.00" oninput="calcTotal()" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total do Item:</span>
+                    <span id="move_total" class="text-sm font-bold text-slate-700">R$ 0,00</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">NF Número</label>
+                        <input name="invoice_number" placeholder="000.000" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">NF Série</label>
+                        <input name="invoice_series" placeholder="1" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fornecedor / Origem</label>
-                    <input type="text" name="supplier" placeholder="Ex: Distribuidora X" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fornecedor</label>
+                    <select name="supplier_id" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="">Selecione...</option>
+                        <?php foreach($suppliers as $s): ?>
+                            <option value="<?= $s['type_prefix'] ?>:<?= $s['id'] ?>"><?= htmlspecialchars($s['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
                 <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 mt-4">
@@ -179,7 +269,13 @@ $movements = $stmt->fetchAll();
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-gray-900 font-bold"><?= htmlspecialchars($m['product_name']) ?></span>
-                                <span class="text-[10px] text-gray-400 block"><?= htmlspecialchars($m['supplier']) ?></span>
+                                <div class="text-[10px] text-gray-400">
+                                    <span class="font-medium"><?= htmlspecialchars($m['supplier_name'] ?: '-') ?></span>
+                                    <?php if($m['invoice_number']): ?>
+                                        <span class="mx-1">•</span>
+                                        <span>NF: <?= htmlspecialchars($m['invoice_number']) ?><?= $m['invoice_series'] ? '/'.$m['invoice_series'] : '' ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <?= $m['type'] === 'Entrada' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' ?>">
@@ -189,8 +285,9 @@ $movements = $stmt->fetchAll();
                             <td class="px-6 py-4 text-right font-bold text-gray-700">
                                 <?= number_format($m['quantity'], 2, ',', '.') ?> <span class="text-[10px] font-normal text-gray-400"><?= $m['unit'] ?></span>
                             </td>
-                            <td class="px-6 py-4 text-right text-gray-500">
-                                R$ <?= number_format($m['price'], 2, ',', '.') ?>
+                            <td class="px-6 py-4 text-right">
+                                <div class="text-gray-900 font-bold">R$ <?= number_format($m['total_price'], 2, ',', '.') ?></div>
+                                <div class="text-[10px] text-gray-400">R$ <?= number_format($m['price'], 2, ',', '.') ?>/<?= $m['unit'] ?></div>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -207,6 +304,13 @@ $movements = $stmt->fetchAll();
 </div>
 
 <script>
+function calcTotal() {
+    const qty = parseFloat(document.getElementById('move_qty').value) || 0;
+    const price = parseFloat(document.getElementById('move_price').value) || 0;
+    const total = qty * price;
+    document.getElementById('move_total').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
 function checkCustomType(select) {
     const customInput = document.getElementById('custom_type');
     if (select.value === 'Outros') {

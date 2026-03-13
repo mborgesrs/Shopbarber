@@ -54,6 +54,7 @@ $totalClients = count($clients);
       <thead class="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 tracking-widest font-bold">
         <tr>
           <th class="px-6 py-2 text-left">Nome</th>
+          <th class="px-6 py-2 text-left">Documento</th>
           <th class="px-6 py-2 text-left">Contato</th>
           <th class="px-6 py-2 text-right">Ações</th>
         </tr>
@@ -66,8 +67,16 @@ $totalClients = count($clients);
                 <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 font-bold uppercase text-xs">
                     <?= substr($c['name'], 0, 1) ?>
                 </div>
-                <span class="text-gray-900 font-bold text-sm"><?=htmlspecialchars($c['name'])?></span>
+                <div class="flex flex-col">
+                    <span class="text-gray-900 font-bold text-sm"><?=htmlspecialchars($c['name'])?></span>
+                    <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full font-bold uppercase w-fit"><?=htmlspecialchars($c['person_type'] ?? 'Física')?></span>
+                </div>
             </div>
+          </td>
+          <td class="px-6 py-2">
+            <span class="text-gray-600 text-xs font-medium">
+                <?= ($c['person_type'] ?? 'Fisica') === 'Juridica' ? htmlspecialchars($c['cnpj']) : htmlspecialchars($c['cpf']) ?>
+            </span>
           </td>
           <td class="px-6 py-2">
             <div class="flex flex-col">

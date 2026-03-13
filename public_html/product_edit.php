@@ -4,8 +4,8 @@ require_once __DIR__.'/../db.php';
 $id = $_GET['id'] ?? null; if(!$id) header('Location: products.php');
 $stmt=$pdo->prepare('SELECT * FROM products WHERE id=?'); $stmt->execute([$id]); $p=$stmt->fetch(); if(!$p) header('Location: products.php');
 if($_SERVER['REQUEST_METHOD']==='POST'){
-  $stmt=$pdo->prepare('UPDATE products SET name=?,description=?,price=?,type=?,unit=? WHERE id=?'); 
-  $stmt->execute([$_POST['name'],$_POST['description'],$_POST['price'],$_POST['type'],$_POST['unit'],$id]);
+  $stmt=$pdo->prepare('UPDATE products SET name=?,description=?,price=?,type=?,unit=?,pr_custo=?,pr_medio=? WHERE id=?'); 
+  $stmt->execute([$_POST['name'],$_POST['description'],$_POST['price'],$_POST['type'],$_POST['unit'],$_POST['pr_custo'],$_POST['pr_medio'],$id]);
   header('Location: products.php');exit;
 }
 ?>
@@ -31,7 +31,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                 <textarea name="description" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700 min-h-[60px]"><?=htmlspecialchars($p['description'])?></textarea>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-2">Preço (R$)</label>
                     <div class="relative">
@@ -45,6 +45,23 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                         <option value="Serviço" <?= $p['type'] === 'Serviço' ? 'selected' : '' ?>>Serviço</option>
                         <option value="Ativo" <?= $p['type'] === 'Ativo' ? 'selected' : '' ?>>Ativo (Estoque)</option>
                     </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Prc. Custo (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">R$</span>
+                        <input name="pr_custo" type="number" step="0.01" value="<?=htmlspecialchars($p['pr_custo'])?>" class="w-full border border-slate-300 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Prc. Médio (R$)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">R$</span>
+                        <input name="pr_medio" type="number" step="0.01" value="<?=htmlspecialchars($p['pr_medio'])?>" class="w-full border border-slate-300 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-2">Unidade</label>

@@ -32,13 +32,13 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         company_name=?, fantasy_name=?, phone=?, email=?, address=?, 
         pix_key_type=?, pix_key=?, pix_merchant_name=?, pix_merchant_city=?, pix_bank_id=?,
         cnpj=?, cpf=?, cep=?, logradouro=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?,
-        asaas_api_key=?, asaas_environment=?
+        asaas_api_key=?, asaas_environment=?, apicpf_key=?
         WHERE company_id=?");
     $stmt->execute([
         $company_name, $fantasy_name, $phone, $email, $address, 
         $_POST['pix_key_type'], $_POST['pix_key'], $_POST['pix_merchant_name'], $_POST['pix_merchant_city'], $_POST['pix_bank_id'],
         $cnpj, $cpf, $cep, $logradouro, $numero, $complemento, $bairro, $cidade, $estado,
-        $asaas_api_key, $asaas_environment,
+        $asaas_api_key, $asaas_environment, $_POST['apicpf_key'] ?? null,
         $company_id
     ]);
 
@@ -347,6 +347,32 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
             </div>
         </div>
 
+        <!-- Integração CPF API -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2 font-bold text-sm text-gray-700 uppercase tracking-wider">
+                <i class="fas fa-id-card text-indigo-600"></i>
+                Integração CPF API (apicpf.com)
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Chave da API (Token)</label>
+                        <div class="relative">
+                            <input type="password" name="apicpf_key" value="<?= htmlspecialchars($settings['apicpf_key'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="API Key...">
+                            <button type="button" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-[11px] text-gray-400 italic">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    Esta chave é utilizada para buscar automaticamente os dados do cliente pelo CPF. Você pode obtê-la no painel do <a href="https://apicpf.com" target="_blank" class="text-indigo-600 underline">apicpf.com</a>.
+                </p>
+            </div>
+        </div>
+
         <div class="flex items-center justify-end gap-3 pb-8">
             <a href="dashboard.php" class="px-6 py-2.5 bg-white text-gray-500 rounded-xl font-bold hover:bg-gray-50 border border-gray-200 transition-colors">Cancelar</a>
             <button class="px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">
@@ -360,8 +386,15 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
 document.addEventListener('DOMContentLoaded', function() {
     const cepInput = document.getElementById('cep');
     if (cepInput) {
-        cepInput.addEventListener('blur', function() {
-            const cep = this.value.replace(/\D/g, '');
+        function applyCepMask(v) {
+            if (!v) return "";
+            v = v.replace(/\D/g, "");
+            return v.replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9);
+        }
+
+        cepInput.addEventListener('input', function(e) {
+            e.target.value = applyCepMask(e.target.value);
+            const cep = e.target.value.replace(/\D/g, '');
             if (cep.length === 8) {
                 fetch(`https://viacep.com.br/ws/${cep}/json/`)
                 .then(r => r.json())
@@ -372,10 +405,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('cidade').value = data.localidade;
                         document.getElementById('estado').value = data.uf;
                         document.getElementById('numero').focus();
+                        cepInput.value = applyCepMask(data.cep);
                     }
                 });
             }
         });
+        
+        cepInput.value = applyCepMask(cepInput.value);
     }
     
     // Preview logo

@@ -15,13 +15,23 @@ if($q){
 
 $products = $stmt->fetchAll();
 $totalProducts = count($products);
+
+$totalStockValue = 0;
+foreach ($products as $p) {
+    if ($p['type'] === 'Ativo') {
+        $totalStockValue += ($p['balance'] * $p['pr_medio']);
+    }
+}
 ?>
 <?php include __DIR__ . '/../views/header.php'; ?>
 
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
   <div>
     <h2 class="text-xl font-bold text-gray-800">Produtos / Serviços</h2>
-    <p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Total: <?= $totalProducts ?></p>
+    <div class="flex gap-4">
+      <p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Total Itens: <?= $totalProducts ?></p>
+      <p class="text-[11px] text-emerald-600 uppercase tracking-widest font-bold">Valor em Estoque: R$ <?= number_format($totalStockValue, 2, ',', '.') ?></p>
+    </div>
   </div>
   
   <div class="flex flex-1 md:max-w-xl gap-2">

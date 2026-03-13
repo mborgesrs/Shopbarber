@@ -50,6 +50,29 @@ foreach ($products as $p) {
       <?php endif; ?>
     </form>
     
+    <div class="relative group flex items-center">
+        <a href="product_import.php" class="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-xl flex items-center gap-2 transition-all shadow-sm font-bold text-sm whitespace-nowrap hover:bg-gray-50">
+            <i class="fas fa-file-import"></i> Importar
+        </a>
+        <div class="ml-2 w-6 h-6 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center cursor-help hover:bg-indigo-50 hover:text-indigo-500 transition-all text-xs border border-gray-200">
+            <i class="fas fa-info"></i>
+        </div>
+        <!-- Tooltip -->
+        <div class="absolute top-full mt-2 right-0 w-64 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] border border-white/10">
+            <div class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-2">Layout da Planilha (CSV)</div>
+            <ul class="space-y-1.5 text-xs font-medium border-l border-white/20 pl-3">
+                <li><span class="text-white/40">1.</span> Categoria</li>
+                <li><span class="text-white/40">2.</span> Produto</li>
+                <li><span class="text-white/40">3.</span> Unidade</li>
+                <li><span class="text-white/40">4.</span> Estoque Mínimo</li>
+                <li><span class="text-white/40">5.</span> Preço Custo</li>
+                <li><span class="text-white/40">6.</span> Preço Venda</li>
+            </ul>
+            <div class="mt-3 pt-2 border-t border-white/5 text-[9px] text-white/40 italic">
+                * Separador sugerido: ponto e vírgula (;)
+            </div>
+        </div>
+    </div>
     <a href="product_create.php" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-100 font-bold text-sm whitespace-nowrap">
       <i class="fas fa-plus"></i> Novo Item
     </a>
@@ -108,7 +131,7 @@ foreach ($products as $p) {
               <a title="Editar" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm" href="product_edit.php?id=<?=$p['id']?>">
                 <i class="fas fa-edit text-[10px]"></i>
               </a>
-              <a title="Excluir" class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" href="product_delete.php?id=<?=$p['id']?>" onclick="return confirm('Excluir?')">
+              <a title="Excluir" class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" href="product_delete.php?id=<?=$p['id']?>">
                 <i class="fas fa-trash text-[10px]"></i>
               </a>
             </div>

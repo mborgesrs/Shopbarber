@@ -48,68 +48,68 @@ if(!$client){ header('Location: clients.php');exit; }
 ?>
 <?php include __DIR__.'/../views/header.php'; ?>
 
-<div class="max-w-4xl mx-auto px-4 py-4">
-    <div class="flex items-center gap-4 mb-6">
-        <a href="clients.php" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
-            <i class="fas fa-arrow-left text-sm"></i>
+<div class="max-w-4xl mx-auto px-4 py-2">
+    <div class="flex items-center gap-3 mb-3">
+        <a href="clients.php" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+            <i class="fas fa-arrow-left text-xs"></i>
         </a>
-        <h2 class="text-2xl font-bold text-gray-800">Editar Pessoa</h2>
+        <h2 class="text-lg font-bold text-gray-800">Editar Pessoa</h2>
     </div>
 
     <?php if($error): ?>
-        <div class="bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl mb-6 flex items-center gap-3 animate-fade-in">
-            <i class="fas fa-exclamation-circle"></i>
-            <span class="text-sm"><?= htmlspecialchars($error) ?></span>
+        <div class="bg-red-50 border border-red-100 text-red-700 p-2 rounded-2xl mb-3 flex items-center gap-3 animate-fade-in">
+            <i class="fas fa-exclamation-circle text-xs"></i>
+            <span class="text-xs"><?= htmlspecialchars($error) ?></span>
         </div>
     <?php endif; ?>
 
     <?php if($success): ?>
-        <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 p-4 rounded-2xl mb-6 flex items-center gap-3 animate-fade-in">
-            <i class="fas fa-check-circle"></i>
-            <span class="text-sm"><?= htmlspecialchars($success) ?></span>
+        <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 p-2 rounded-2xl mb-3 flex items-center gap-3 animate-fade-in">
+            <i class="fas fa-check-circle text-xs"></i>
+            <span class="text-xs"><?= htmlspecialchars($success) ?></span>
         </div>
     <?php endif; ?>
 
-    <form method="post" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+    <form method="post" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
         <input type="hidden" name="id" value="<?=htmlspecialchars($id)?>">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-4">
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Nome Completo / Razão Social</label>
-                <input name="name" id="name" value="<?=htmlspecialchars($client['name'] ?? '')?>" required class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo / Razão Social</label>
+                <input name="name" id="name" value="<?=htmlspecialchars($client['name'] ?? '')?>" required class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Pessoa</label>
-                <select name="person_type" id="person_type" onchange="togglePersonType()" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Pessoa</label>
+                <select name="person_type" id="person_type" onchange="togglePersonType()" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                     <option value="Fisica" <?= ($client['person_type'] ?? '') === 'Fisica' ? 'selected' : '' ?>>Física</option>
                     <option value="Juridica" <?= ($client['person_type'] ?? '') === 'Juridica' ? 'selected' : '' ?>>Jurídica</option>
                 </select>
             </div>
 
             <div id="div_cpf" class="<?= ($client['person_type'] ?? 'Fisica') === 'Juridica' ? 'hidden' : '' ?>">
-                <label class="block text-sm font-medium text-slate-700 mb-2">CPF</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">CPF</label>
                 <div class="flex gap-2">
-                    <input name="cpf" id="cpf" value="<?=htmlspecialchars($client['cpf'] ?? '')?>" placeholder="000.000.000-00" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700" onkeyup="handleCpf(event)">
-                    <button type="button" onclick="lookupCpf()" class="bg-indigo-100 text-indigo-700 px-4 rounded-xl border border-indigo-200 hover:bg-indigo-200 transition-all font-bold text-xs whitespace-nowrap">
-                        <i class="fas fa-search mr-1"></i> Consultar
+                    <input name="cpf" id="cpf" value="<?=htmlspecialchars($client['cpf'] ?? '')?>" placeholder="000.000.000-00" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm" onkeyup="handleCpf(event)">
+                    <button type="button" onclick="lookupCpf()" class="bg-indigo-50 text-indigo-700 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all font-bold text-xs whitespace-nowrap">
+                         Consultar
                     </button>
                 </div>
             </div>
 
             <div id="div_cnpj" class="<?= ($client['person_type'] ?? 'Fisica') === 'Fisica' ? 'hidden' : '' ?>">
-                <label class="block text-sm font-medium text-slate-700 mb-2">CNPJ</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">CNPJ</label>
                 <div class="flex gap-2">
-                    <input name="cnpj" id="cnpj" value="<?=htmlspecialchars($client['cnpj'] ?? '')?>" placeholder="00.000.000/0000-00" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700" onkeyup="handleCnpj(event)">
-                    <button type="button" onclick="lookupCnpj()" class="bg-indigo-100 text-indigo-700 px-4 rounded-xl border border-indigo-200 hover:bg-indigo-200 transition-all font-bold text-xs whitespace-nowrap">
-                        <i class="fas fa-search mr-1"></i> Consultar
+                    <input name="cnpj" id="cnpj" value="<?=htmlspecialchars($client['cnpj'] ?? '')?>" placeholder="00.000.000/0000-00" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm" onkeyup="handleCnpj(event)">
+                    <button type="button" onclick="lookupCnpj()" class="bg-indigo-50 text-indigo-700 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all font-bold text-xs whitespace-nowrap">
+                         Consultar
                     </button>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Divisão</label>
-                <select name="division" id="division" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Divisão</label>
+                <select name="division" id="division" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                     <option value="Clientes" <?= ($client['division'] ?? '') === 'Clientes' ? 'selected' : '' ?>>Clientes</option>
                     <option value="Fornecedores" <?= ($client['division'] ?? '') === 'Fornecedores' ? 'selected' : '' ?>>Fornecedores</option>
                     <option value="Profissionais" <?= ($client['division'] ?? '') === 'Profissionais' ? 'selected' : '' ?>>Profissionais</option>
@@ -118,65 +118,65 @@ if(!$client){ header('Location: clients.php');exit; }
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">CEP</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">CEP</label>
                 <div class="flex gap-2">
-                    <input name="cep" id="cep" value="<?=htmlspecialchars($client['cep'] ?? '')?>" placeholder="00000-000" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
-                    <button type="button" onclick="lookupCep()" class="bg-slate-100 text-slate-600 px-4 rounded-xl border border-slate-200 hover:bg-slate-200 transition-all">
+                    <input name="cep" id="cep" value="<?=htmlspecialchars($client['cep'] ?? '')?>" placeholder="00000-000" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
+                    <button type="button" onclick="lookupCep()" class="bg-slate-50 text-slate-600 px-4 rounded-xl border border-slate-200 hover:bg-slate-100 transition-all text-sm">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
 
-            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div class="md:col-span-3">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Endereço</label>
-                    <input name="address" id="address" value="<?=htmlspecialchars($client['address'] ?? '')?>" placeholder="Rua, Av..." class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Endereço</label>
+                    <input name="address" id="address" value="<?=htmlspecialchars($client['address'] ?? '')?>" placeholder="Rua, Av..." class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Nº</label>
-                    <input name="number" id="number" value="<?=htmlspecialchars($client['number'] ?? '')?>" placeholder="123" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nº</label>
+                    <input name="number" id="number" value="<?=htmlspecialchars($client['number'] ?? '')?>" placeholder="123" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:col-span-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Bairro</label>
-                    <input name="neighborhood" id="neighborhood" value="<?=htmlspecialchars($client['neighborhood'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bairro</label>
+                    <input name="neighborhood" id="neighborhood" value="<?=htmlspecialchars($client['neighborhood'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Cidade</label>
-                    <input name="city" id="city" value="<?=htmlspecialchars($client['city'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cidade</label>
+                    <input name="city" id="city" value="<?=htmlspecialchars($client['city'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">UF</label>
-                    <input name="state" id="state" value="<?=htmlspecialchars($client['state'] ?? '')?>" maxlength="2" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700 uppercase">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">UF</label>
+                    <input name="state" id="state" value="<?=htmlspecialchars($client['state'] ?? '')?>" maxlength="2" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 uppercase text-sm text-center">
                 </div>
             </div>
 
-            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">E-mail</label>
-                    <input name="email" id="email" value="<?=htmlspecialchars($client['email'] ?? '')?>" type="email" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail</label>
+                    <input name="email" id="email" value="<?=htmlspecialchars($client['email'] ?? '')?>" type="email" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Telefone</label>
-                    <input name="phone" id="phone" value="<?=htmlspecialchars($client['phone'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700" maxlength="15" onkeyup="handlePhone(event)">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone</label>
+                    <input name="phone" id="phone" value="<?=htmlspecialchars($client['phone'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm" maxlength="15" onkeyup="handlePhone(event)">
                 </div>
                 <div>
-                    <label id="lbl_date_nascto" class="block text-sm font-medium text-slate-700 mb-2"><?= ($client['person_type'] ?? '') === 'Juridica' ? 'Data de Fundação' : 'Data de Nascimento' ?></label>
-                    <input type="date" name="date_nascto" value="<?=htmlspecialchars($client['date_nascto'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700">
+                    <label id="lbl_date_nascto" class="block text-xs font-bold text-slate-500 uppercase mb-1"><?= ($client['person_type'] ?? '') === 'Juridica' ? 'Fundação' : 'Nascimento' ?></label>
+                    <input type="date" name="date_nascto" value="<?=htmlspecialchars($client['date_nascto'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
                 </div>
             </div>
 
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Observações</label>
-                <textarea name="notes" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-700 min-h-[60px]"><?=htmlspecialchars($client['notes'] ?? '')?></textarea>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Observações</label>
+                <textarea name="notes" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 min-h-[60px] text-sm"><?=htmlspecialchars($client['notes'] ?? '')?></textarea>
             </div>
         </div>
 
-        <div class="flex items-center justify-between pt-6 border-t border-slate-100">
-            <a href="clients.php" class="bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded-xl hover:bg-slate-50 font-medium transition-colors">Voltar</a>
-            <button class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Salvar Alterações</button>
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+            <a href="clients.php" class="bg-white border border-slate-200 text-slate-600 px-4 py-1.5 rounded-xl hover:bg-slate-50 font-bold transition-colors text-xs">Voltar</a>
+            <button class="bg-blue-600 text-white px-6 py-1.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 text-xs">Salvar Alterações</button>
         </div>
     </form>
 </div>

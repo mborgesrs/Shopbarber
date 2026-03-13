@@ -30,19 +30,19 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 ?>
 <?php include __DIR__.'/../views/header.php'; ?>
 <div class="max-w-4xl mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-        <a href="companies.php" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
-            <i class="fas fa-arrow-left text-sm"></i>
+    <div class="flex items-center gap-3 mb-3">
+        <a href="companies.php" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+            <i class="fas fa-arrow-left text-xs"></i>
         </a>
-        <h2 class="text-2xl font-bold text-gray-800">Nova Empresa / Parceiro</h2>
+        <h2 class="text-lg font-bold text-gray-800">Nova Empresa / Parceiro</h2>
     </div>
 
-    <form method="post" class="space-y-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <form method="post" class="space-y-2">
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1.5">
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">Divisão</label>
-                    <select name="division" required class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Divisão</label>
+                    <select name="division" required class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                         <option value="Clientes">Clientes</option>
                         <option value="Fornecedores">Fornecedores</option>
                         <option value="Profissionais">Profissionais</option>
@@ -51,94 +51,97 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">Status</label>
-                    <select name="status" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Status</label>
+                    <select name="status" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                         <option value="active">Ativo</option>
                         <option value="inactive">Inativo</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">Razão Social</label>
-                    <div class="relative">
-                        <input name="name" id="name" required class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
-                        <button type="button" id="btn-cnpj" class="absolute right-2 top-1.5 bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors">Consultar CNPJ</button>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">Nome Fantasia</label>
-                    <input name="fantasy_name" id="fantasy_name" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
-                </div>
-
-                <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">CNPJ</label>
-                    <input name="document" id="document" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" placeholder="00.000.000/0000-00">
-                </div>
-
-                <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">Tipo de Pessoa</label>
-                    <select name="person_type" id="person_type" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tipo de Pessoa</label>
+                    <select name="person_type" id="person_type" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                         <option value="Juridica">Jurídica</option>
                         <option value="Fisica">Física</option>
                     </select>
                 </div>
+            </div>
 
-                <div>
-                    <label id="lbl_date_nascto" class="block mb-1 text-sm font-medium text-slate-700">Data de Fundação</label>
-                    <input type="date" name="date_nascto" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1.5">
+                <div class="md:col-span-2">
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Razão Social / Nome</label>
+                    <div class="relative">
+                        <input name="name" id="name" required class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
+                        <button type="button" id="btn-cnpj" class="absolute right-1.5 top-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-colors">CNPJ</button>
+                    </div>
                 </div>
-
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-slate-700">CPF</label>
-                    <div class="flex gap-2">
-                        <input name="cpf" id="cpf" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" placeholder="000.000.000-00">
-                        <button type="button" id="btn-cpf" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-xl border border-indigo-200 hover:bg-indigo-200 transition-all font-bold text-xs whitespace-nowrap">Consultar CPF</button>
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Documento (CNPJ)</label>
+                    <input name="document" id="document" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs" placeholder="00.000.000/0000-00">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1.5">
+                <div class="md:col-span-2">
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Nome Fantasia</label>
+                    <input name="fantasy_name" id="fantasy_name" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
+                </div>
+                <div>
+                    <label id="lbl_date_nascto" class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Fundação</label>
+                    <input type="date" name="date_nascto" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
+                <div>
+                    <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">CPF</label>
+                    <div class="flex gap-1.5">
+                        <input name="cpf" id="cpf" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs" placeholder="000.000.000-00">
+                        <button type="button" id="btn-cpf" class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all font-bold text-[9px] whitespace-nowrap">CPF</button>
                     </div>
                 </div>
             </div>
 
-            <div class="border-t border-slate-100 pt-6 mb-6">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Endereço</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="border-t border-slate-100 pt-2 mb-1.5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-1.5">
                     <div>
-                        <label class="block mb-1 text-sm font-medium text-slate-700">CEP</label>
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">CEP</label>
                         <div class="relative">
-                            <input name="cep" id="cep" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
-                            <i id="cep-loading" class="fas fa-spinner fa-spin absolute right-3 top-3 text-slate-400 hidden"></i>
+                            <input name="cep" id="cep" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
+                            <i id="cep-loading" class="fas fa-spinner fa-spin absolute right-2.5 top-2.5 text-slate-400 hidden"></i>
                         </div>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block mb-1 text-sm font-medium text-slate-700">Endereço</label>
-                        <input name="address" id="address" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Endereço</label>
+                        <input name="address" id="address" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                     </div>
                     <div>
-                        <label class="block mb-1 text-sm font-medium text-slate-700">Número</label>
-                        <input name="number" id="number" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Número</label>
+                        <input name="number" id="number" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Bairro</label>
+                        <input name="neighborhood" id="neighborhood" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                     </div>
                     <div>
-                        <label class="block mb-1 text-sm font-medium text-slate-700">Bairro</label>
-                        <input name="neighborhood" id="neighborhood" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Cidade</label>
+                        <input name="city" id="city" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs">
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="col-span-2">
-                            <label class="block mb-1 text-sm font-medium text-slate-700">Cidade</label>
-                            <input name="city" id="city" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700">
-                        </div>
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-slate-700">UF</label>
-                            <input name="state" id="state" maxlength="2" class="w-full border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 text-center">
-                        </div>
+                    <div>
+                        <label class="block mb-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">UF</label>
+                        <input name="state" id="state" maxlength="2" class="w-full border border-slate-200 rounded-xl p-1.5 focus:ring-1 focus:ring-blue-500 outline-none text-slate-700 text-xs text-center">
                     </div>
                 </div>
             </div>
 
-            
-            <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-100">Salvar Registro</button>
+            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-1.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-100 text-xs">Salvar Registro</button>
             </div>
         </div>
     </form>
+</div>
 </div>
 
 <script>

@@ -57,8 +57,8 @@ if (!$settings || empty($settings['apicpf_key'])) {
     exit;
 }
 
-$api_key = $settings['apicpf_key'];
-$url = "https://apicpf.com/api/consulta?cpf={$cpf}&api_key={$api_key}";
+$api_key = trim($settings['apicpf_key']);
+$url = "https://api.cpfhub.io/cpf/{$cpf}";
 
 try {
     $ch = curl_init();
@@ -66,6 +66,10 @@ try {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "x-api-key: {$api_key}",
+        "Accept: application/json"
+    ]);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -78,25 +82,46 @@ try {
         http_response_code(200); // Send 200 to handle message gracefully in JS
         echo json_encode([
             'success' => false, 
-            'message' => 'Limite de consultas da API atingido (HTTP 429). Por favor, verifique seu plano ou tente mais tarde.'
+            'message' => 'Limite de consultas da API atingido. Verifique seu plano na CPFHub.'
         ]);
         exit;
     }
 
+    // CPFHub returns 404 if CPF is valid but not found in their database
+    if ($httpCode === 404) {
+        echo json_encode(['success' => false, 'message' => 'CPF não encontrado na base de dados.']);
+        exit;
+    }
+
     if ($httpCode !== 200) {
-        echo json_encode(['success' => false, 'message' => 'Erro na consulta (HTTP ' . $httpCode . ')', 'details' => $response]);
+        echo json_encode(['success' => false, 'message' => 'Erro na consulta (HTTP ' . $httpCode . ')', 'details' => json_decode($response, true) ?? $response]);
         exit;
     }
 
     $data = json_decode($response, true);
     
-    // 4. Save to Cache if successful
-    if (isset($data['nome'])) {
-        $stmt = $pdo->prepare("INSERT INTO cpf_cache (cpf, data) VALUES (?, ?) ON DUPLICATE KEY UPDATE data = ?, created_at = CURRENT_TIMESTAMP");
-        $stmt->execute([$cpf, $response, $response]);
+    // Transform CPFHub response to the format expected by the frontend
+    // CPFHub format: { "success": true, "data": { "cpf": "...", "name": "...", "birthDate": "..." } }
+    $mappedData = [
+        'success' => true,
+        'nome' => $data['data']['name'] ?? '',
+        'nascimento' => ''
+    ];
+
+    if (isset($data['data']['birthDate']) && !empty($data['data']['birthDate'])) {
+        // Formato da API normalmente é YYYY-MM-DD, a máscara no JS requer esse formato e aplica DD/MM/YYYY na tela
+        $mappedData['nascimento'] = substr($data['data']['birthDate'], 0, 10); // Ensure YYYY-MM-DD
     }
 
-    echo $response;
+    $jsonResponse = json_encode($mappedData);
+
+    // 4. Save to Cache if successful
+    if (!empty($mappedData['nome'])) {
+        $stmt = $pdo->prepare("INSERT INTO cpf_cache (cpf, data) VALUES (?, ?) ON DUPLICATE KEY UPDATE data = ?, created_at = CURRENT_TIMESTAMP");
+        $stmt->execute([$cpf, $jsonResponse, $jsonResponse]);
+    }
+
+    echo $jsonResponse;
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Erro ao conectar: ' . $e->getMessage()]);

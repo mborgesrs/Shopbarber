@@ -3,15 +3,33 @@ session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php')
 require_once __DIR__.'/../db.php';
 
 $q = $_GET['q'] ?? '';
+$cat_id = $_GET['category_id'] ?? '';
 $company_id = $_SESSION['company_id'];
 
+$stmt_cat = $pdo->prepare("SELECT * FROM categories WHERE company_id = ? ORDER BY name");
+$stmt_cat->execute([$company_id]);
+$categories = $stmt_cat->fetchAll();
+
+$query = 'SELECT p.*, c.name as category_name 
+          FROM products p 
+          LEFT JOIN categories c ON p.category_id = c.id 
+          WHERE p.company_id = ?';
+$params = [$company_id];
+
 if($q){
-  $stmt = $pdo->prepare('SELECT * FROM products WHERE company_id = ? AND (name LIKE ? OR description LIKE ?) ORDER BY name ASC');
-  $stmt->execute([$company_id, "%$q%", "%$q%"]); 
-}else{
-  $stmt = $pdo->prepare('SELECT * FROM products WHERE company_id = ? ORDER BY name ASC');
-  $stmt->execute([$company_id]);
+  $query .= ' AND (p.name LIKE ? OR p.description LIKE ?)';
+  $params[] = "%$q%";
+  $params[] = "%$q%";
 }
+
+if($cat_id){
+  $query .= ' AND p.category_id = ?';
+  $params[] = $cat_id;
+}
+
+$query .= ' ORDER BY p.name ASC';
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
 
 $products = $stmt->fetchAll();
 $totalProducts = count($products);
@@ -34,17 +52,20 @@ foreach ($products as $p) {
     </div>
   </div>
   
-  <div class="flex flex-1 md:max-w-xl gap-2">
-    <form method="get" class="flex-1 flex gap-2">
+  <div class="flex flex-1 md:max-w-4xl gap-2">
+    <form method="get" class="flex-1 flex gap-2" id="searchForm">
       <div class="relative flex-1">
-        <input name="q" value="<?=htmlspecialchars($q)?>" placeholder="Buscar produto..." class="w-full border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm">
+        <input type="search" name="q" value="<?=htmlspecialchars($q)?>" placeholder="Buscar produto..." class="w-full border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm">
         <i class="fas fa-search absolute left-3 top-2.5 text-gray-300 text-xs"></i>
       </div>
-      <button type="submit" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">
-        <i class="fas fa-filter text-xs"></i>
-      </button>
-      <?php if($q): ?>
-        <a href="products.php" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-100 transition-colors flex items-center gap-2">
+      <select name="category_id" class="border border-gray-200 py-2 px-3 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm bg-white text-gray-600 max-w-[160px] md:max-w-[220px] truncate" onchange="this.form.submit()">
+        <option value="">Categorias...</option>
+        <?php foreach($categories as $cat): ?>
+          <option value="<?= $cat['id'] ?>" <?= $cat_id == $cat['id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <?php if($q || $cat_id): ?>
+        <a href="products.php" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-100 transition-colors flex items-center gap-2" title="Limpar filtros">
           <i class="fas fa-times text-xs"></i>
         </a>
       <?php endif; ?>
@@ -105,9 +126,14 @@ foreach ($products as $p) {
                 </div>
                 <div>
                   <span class="text-gray-900 font-bold text-sm block"><?=htmlspecialchars($p['name'])?></span>
-                  <?php if(!empty($p['description'])): ?>
-                    <span class="text-[10px] text-gray-400 line-clamp-1"><?=htmlspecialchars($p['description'])?></span>
-                  <?php endif; ?>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <?php if(!empty($p['category_name'])): ?>
+                      <span class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-medium"><?=htmlspecialchars($p['category_name'])?></span>
+                    <?php endif; ?>
+                    <?php if(!empty($p['description'])): ?>
+                      <span class="text-[10px] text-gray-400 line-clamp-1"><?=htmlspecialchars($p['description'])?></span>
+                    <?php endif; ?>
+                  </div>
                 </div>
             </div>
           </td>

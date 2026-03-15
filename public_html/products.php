@@ -121,9 +121,15 @@ foreach ($products as $p) {
         <tr class="hover:bg-gray-50/80 transition-colors group">
           <td class="px-6 py-2">
             <div class="flex items-center gap-3">
+                <?php /*
                 <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 font-bold uppercase text-xs">
-                    <?= substr($p['name'], 0, 1) ?>
+                    <?php if($p['type'] === 'Ativo'): ?>
+                      <i class="fas fa-box"></i>
+                    <?php else: ?>
+                      <i class="fas fa-tag"></i>
+                    <?php endif; ?>
                 </div>
+                */ ?>
                 <div>
                   <span class="text-gray-900 font-bold text-sm block"><?=htmlspecialchars($p['name'])?></span>
                   <div class="flex items-center gap-2 mt-0.5">

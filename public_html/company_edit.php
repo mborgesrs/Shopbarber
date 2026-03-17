@@ -215,7 +215,12 @@ if($id != $_SESSION['company_id'] && $company['parent_company_id'] != $_SESSION[
                         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight block mb-0.5">WhatsApp</label>
-                                <input name="phone" value="<?=htmlspecialchars($settings['phone'] ?? '')?>" class="mask-phone w-full border-gray-200 border p-1.5 rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-xs" placeholder="(00) 00000-0000">
+                                <div class="flex gap-2">
+                                    <input name="phone" id="comp_phone" value="<?=htmlspecialchars($settings['phone'] ?? '')?>" class="mask-phone w-full border-gray-200 border p-1.5 rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-xs" placeholder="(00) 00000-0000">
+                                    <button type="button" onclick="window.open('https://wa.me/' + document.getElementById('comp_phone').value.replace(/\D/g, ''), '_blank')" class="bg-emerald-50 text-emerald-700 px-3 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold text-xs flex items-center justify-center">
+                                        <i class="fab fa-whatsapp text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-tight block mb-0.5">E-mail</label>

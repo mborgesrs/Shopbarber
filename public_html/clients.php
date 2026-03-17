@@ -5,8 +5,28 @@ $q = $_GET['q'] ?? '';
 $company_id = $_SESSION['company_id'];
 
 if($q){
-  $stmt = $pdo->prepare('SELECT * FROM clients WHERE company_id = ? AND (name LIKE ? OR email LIKE ? OR phone LIKE ? OR company LIKE ? OR notes LIKE ?) ORDER BY name ASC');
-  $stmt->execute([$company_id, "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"]); 
+  $qDigits = preg_replace('/\D/', '', $q);
+  $sql = 'SELECT * FROM clients WHERE company_id = ? AND (
+    name LIKE ? OR email LIKE ? OR phone LIKE ? OR company LIKE ? OR notes LIKE ? OR 
+    cpf LIKE ? OR cnpj LIKE ? OR address LIKE ? OR neighborhood LIKE ? OR city LIKE ? OR 
+    state LIKE ? OR division LIKE ? OR cep LIKE ?';
+  
+  $params = [$company_id, "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"];
+  
+  if($qDigits !== ''){
+    $sql .= ' OR REPLACE(REPLACE(REPLACE(phone, "(", ""), ")", ""), "-", "") LIKE ?';
+    $sql .= ' OR REPLACE(REPLACE(cpf, ".", ""), "-", "") LIKE ?';
+    $sql .= ' OR REPLACE(REPLACE(REPLACE(cnpj, ".", ""), "/", ""), "-", "") LIKE ?';
+    $sql .= ' OR REPLACE(cep, "-", "") LIKE ?';
+    $params[] = "%$qDigits%";
+    $params[] = "%$qDigits%";
+    $params[] = "%$qDigits%";
+    $params[] = "%$qDigits%";
+  }
+  
+  $sql .= ') ORDER BY name ASC';
+  $stmt = $pdo->prepare($sql);
+  $stmt->execute($params); 
 }else{
   $stmt = $pdo->prepare('SELECT * FROM clients WHERE company_id = ? ORDER BY name ASC');
   $stmt->execute([$company_id]);
@@ -80,7 +100,14 @@ $totalClients = count($clients);
           </td>
           <td class="px-6 py-2">
             <div class="flex flex-col">
-                <span class="text-gray-700 text-xs font-medium"><?=formatPhone($c['phone'])?></span>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-700 text-xs font-medium"><?=formatPhone($c['phone'])?></span>
+                    <?php if($c['phone']): ?>
+                        <a href="https://wa.me/<?= preg_replace('/\D/', '', $c['phone']) ?>" target="_blank" class="text-emerald-500 hover:text-emerald-600 transition-colors" title="Enviar WhatsApp">
+                            <i class="fab fa-whatsapp text-sm"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
                 <span class="text-[10px] text-gray-400"><?=htmlspecialchars($c['email'])?></span>
             </div>
 

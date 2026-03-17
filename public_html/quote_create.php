@@ -192,26 +192,26 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <?php include __DIR__ . '/../views/header.php'; ?>
-<div class="w-full">
-    <div class="flex items-center gap-4 mb-6">
+<div class="w-full max-w-4xl mx-auto">
+    <div class="flex items-center gap-3 mb-4">
         <?php 
         $backUrl = ($from_calendar ? 'calendar.php' : 'quotes.php');
         if ($from_calendar && $month_cal && $year_cal) $backUrl .= "?month=$month_cal&year=$year_cal";
         ?>
-        <a href="<?= $backUrl ?>" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
-          <i class="fas fa-arrow-left text-sm"></i>
+        <a href="<?= $backUrl ?>" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+          <i class="fas fa-arrow-left text-xs"></i>
       </a>
-        <h2 class="text-2xl font-bold text-gray-800">Novo Agendamento</h2>
+        <h2 class="text-xl font-bold text-gray-800">Novo Agendamento</h2>
     </div>
 
-    <form method="post" id="quoteForm" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+    <form method="post" id="quoteForm" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
       <input type="hidden" name="from" value="<?= $from_calendar ? 'calendar' : '' ?>">
       <input type="hidden" name="month" value="<?= htmlspecialchars($month_cal) ?>">
       <input type="hidden" name="year" value="<?= htmlspecialchars($year_cal) ?>">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Pessoa</label>
-              <select name="client_id" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Pessoa</label>
+              <select name="client_id" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required>
                   <option value="">Selecione uma pessoa...</option>
                   <?php foreach($clients as $c): ?>
                       <option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?> (<?=$c['phone']?>)</option>
@@ -219,8 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </select>
           </div>
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Profissional</label>
-              <select name="professional_id" id="professional_id" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
+              <label class="block text-xs font-bold text-gray-700 mb-1">Profissional</label>
+              <select name="professional_id" id="professional_id" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
                   <option value="">Selecione um profissional...</option>
                   <?php foreach($professionals as $p): ?>
                       <option value="<?=$p['id']?>"><?=htmlspecialchars($p['name'])?></option>
@@ -228,35 +228,35 @@ document.addEventListener('DOMContentLoaded', () => {
               </select>
           </div>
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Data</label>
-              <input type="date" id="date_select" value="<?= $pre_date ?: date('Y-m-d') ?>" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
+              <label class="block text-xs font-bold text-gray-700 mb-1">Data</label>
+              <input type="date" id="date_select" value="<?= $pre_date ?: date('Y-m-d') ?>" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
           </div>
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Horários Disponíveis</label>
-              <select id="time_select" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required onchange="updateDateTime()">
+              <label class="block text-xs font-bold text-gray-700 mb-1">Horários Disponíveis</label>
+              <select id="time_select" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="updateDateTime()">
                   <option value="">Selecione data/prof...</option>
               </select>
           </div>
           <input type="hidden" name="date_time" id="date_time_input" value="<?= $default_datetime ?>">
       </div>
 
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                <i class="fas fa-shopping-basket text-purple-500 text-sm"></i>
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-shopping-basket text-purple-500 text-xs"></i>
                 Serviços / Produtos
             </h3>
         </div>
         
-        <div class="bg-gray-50 p-4 rounded-xl mb-4">
+        <div class="bg-gray-50/50 p-3 rounded-xl mb-3 border border-gray-100">
             <div class="flex gap-2">
-                <select id="productSelect" class="flex-1 border border-gray-200 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                <select id="productSelect" class="flex-1 border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">-- Selecionar produto/serviço --</option>
                     <?php foreach($products as $p): ?>
                         <option value="<?=$p['id']?>|<?=$p['price']?>"><?=htmlspecialchars($p['name'])?> — R$ <?=number_format($p['price'],2,',','.')?></option>
                     <?php endforeach; ?>
                 </select>
-                <button type="button" id="addItem" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <button type="button" id="addItem" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm shadow-blue-100">
                     <i class="fas fa-plus"></i>
                     Add
                 </button>
@@ -264,45 +264,45 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm" id="itemsTable">
+            <table class="w-full text-[11px]" id="itemsTable">
                 <thead class="text-gray-400 border-b border-gray-100">
                     <tr>
-                        <th class="text-left py-2 font-medium">Item</th>
-                        <th class="text-left py-2 font-medium">Qtd</th>
-                        <th class="text-left py-2 font-medium">Preço</th>
-                        <th class="text-left py-2 font-medium">Subtotal</th>
-                        <th class="text-right py-2 font-medium"></th>
+                        <th class="text-left py-1.5 font-medium">Item</th>
+                        <th class="text-left py-1.5 font-medium">Qtd</th>
+                        <th class="text-left py-1.5 font-medium">Preço</th>
+                        <th class="text-left py-1.5 font-medium">Subtotal</th>
+                        <th class="text-right py-1.5 font-medium"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-50 text-gray-700">
                     <!-- Dinamicamente via app.js -->
                 </tbody>
             </table>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+      <div class="space-y-4">
           <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Observações</label>
-              <textarea name="notes" rows="3" class="w-full border border-gray-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-300" placeholder="Algum detalhe importante?"></textarea>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Observações</label>
+              <textarea name="notes" rows="2" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-300" placeholder="Algum detalhe importante?"></textarea>
           </div>
-          <div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
-              <div class="flex justify-between items-center mb-4">
-                  <span class="text-gray-600 font-medium">Total do Geral:</span>
-                  <span id="totalDisplay" class="text-2xl font-bold text-blue-600 tracking-tight">R$ 0,00</span>
+          <div class="bg-blue-50/30 p-4 rounded-xl border border-blue-100/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-600 font-medium">Total Geral:</span>
+                  <span id="totalDisplay" class="text-xl font-bold text-blue-600 tracking-tight">R$ 0,00</span>
               </div>
               <label class="flex items-center gap-2 cursor-pointer group">
                   <input type="checkbox" name="send_whatsapp" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                  <span class="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">Enviar confirmação via WhatsApp</span>
+                  <span class="text-[11px] text-gray-500 group-hover:text-blue-600 transition-colors">Enviar confirmação via WhatsApp</span>
               </label>
           </div>
       </div>
 
       <input type="hidden" name="items" id="itemsInput">
       
-      <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
-          <a href="<?= $backUrl ?>" class="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">Cancelar</a>
-          <button class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2">
+      <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
+          <a href="<?= $backUrl ?>" class="px-5 py-2 rounded-lg border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-50 transition-colors">Cancelar</a>
+          <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2">
               <i class="fas fa-check"></i>
               Gravar Agendamento
           </button>

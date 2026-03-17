@@ -95,7 +95,7 @@ $tipos_pagamento = $tipos_pagamento->fetchAll();
   }
 </style>
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-7xl mx-auto">
   <div class="flex items-center justify-between mb-6">
     <h2 class="text-2xl font-semibold text-slate-800">Editar Registro Financeiro #<?= $id ?></h2>
   </div>
@@ -164,51 +164,73 @@ $tipos_pagamento = $tipos_pagamento->fetchAll();
       <!-- Row 3: Cliente -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-slate-700 mb-1">Cliente / Fornecedor</label>
-        <select name="client_id" id="client_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" placeholder="Pesquisar por nome, email, telefone ou empresa...">
-          <option value="">-- Selecione --</option>
-          <?php foreach($clients as $c): ?>
-            <option value="<?=$c['id']?>" <?= $finance['client_id']==$c['id'] ? 'selected' : '' ?>>
-              <?=htmlspecialchars($c['name'])?> 
-              <?= !empty($c['email']) ? ' - ' . htmlspecialchars($c['email']) : '' ?>
-              <?= !empty($c['phone']) ? ' - ' . htmlspecialchars($c['phone']) : '' ?>
-              <?= !empty($c['company']) ? ' (' . htmlspecialchars($c['company']) . ')' : '' ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
+        <div class="flex gap-2">
+            <div class="flex-1">
+                <select name="client_id" id="client_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" placeholder="Pesquisar por nome, email, telefone ou empresa...">
+                  <option value="">-- Selecione --</option>
+                  <?php foreach($clients as $c): ?>
+                    <option value="<?=$c['id']?>" <?= $finance['client_id']==$c['id'] ? 'selected' : '' ?>>
+                      <?=htmlspecialchars($c['name'])?> 
+                      <?= !empty($c['email']) ? ' - ' . htmlspecialchars($c['email']) : '' ?>
+                      <?= !empty($c['phone']) ? ' - ' . htmlspecialchars($c['phone']) : '' ?>
+                      <?= !empty($c['company']) ? ' (' . htmlspecialchars($c['company']) . ')' : '' ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+            </div>
+            <a href="client_create.php?return_url=<?= urlencode("finance_edit.php?id=$id") ?>" class="w-10 h-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100" title="Nova Pessoa">
+                <i class="fas fa-plus text-xs"></i>
+            </a>
+        </div>
       </div>
 
       <!-- Row 4: Portador, Conta, Tipo Pagamento -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Portador</label>
-          <select name="portador_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-            <option value="">-- Selecione --</option>
-            <?php foreach($portadores as $p): ?>
-              <option value="<?=$p['id']?>" <?= $finance['portador_id']==$p['id'] ? 'selected' : '' ?>><?=htmlspecialchars($p['nome'])?></option>
-            <?php endforeach; ?>
-          </select>
+          <div class="flex gap-2">
+            <select name="portador_id" class="flex-1 border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
+                <option value="">-- Selecione --</option>
+                <?php foreach($portadores as $p): ?>
+                <option value="<?=$p['id']?>" <?= $finance['portador_id']==$p['id'] ? 'selected' : '' ?>><?=htmlspecialchars($p['nome'])?></option>
+                <?php endforeach; ?>
+            </select>
+            <a href="portadores.php?return_url=<?= urlencode("finance_edit.php?id=$id") ?>" class="w-10 h-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100" title="Novo Portador">
+                <i class="fas fa-plus text-xs"></i>
+            </a>
+          </div>
         </div>
         
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Conta Contábil</label>
-          <select name="conta_id" id="conta_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" onchange="checkContaTipo(this)">
-            <option value="">-- Selecione --</option>
-            <?php foreach($contas as $c): ?>
-              <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" <?= $finance['conta_id']==$c['id'] ? 'selected' : '' ?> class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-slate-50' : '' ?>">
-                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
-              </option>
-            <?php endforeach; ?>
-          </select>
+          <div class="flex gap-2">
+            <select name="conta_id" id="conta_id" class="flex-1 border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" onchange="checkContaTipo(this)">
+                <option value="">-- Selecione --</option>
+                <?php foreach($contas as $c): ?>
+                <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" <?= $finance['conta_id']==$c['id'] ? 'selected' : '' ?> class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-slate-50' : '' ?>">
+                    <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <a href="contas.php?return_url=<?= urlencode("finance_edit.php?id=$id") ?>" class="w-10 h-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100" title="Nova Conta">
+                <i class="fas fa-plus text-xs"></i>
+            </a>
+          </div>
         </div>
         
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Pagamento</label>
-          <select name="tipo_pagamento_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-            <option value="">-- Selecione --</option>
-            <?php foreach($tipos_pagamento as $tp): ?>
-              <option value="<?=$tp['id']?>" <?= $finance['tipo_pagamento_id']==$tp['id'] ? 'selected' : '' ?>><?=htmlspecialchars($tp['descricao'])?></option>
-            <?php endforeach; ?>
-          </select>
+          <div class="flex gap-2">
+            <select name="tipo_pagamento_id" class="flex-1 border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
+                <option value="">-- Selecione --</option>
+                <?php foreach($tipos_pagamento as $tp): ?>
+                <option value="<?=$tp['id']?>" <?= $finance['tipo_pagamento_id']==$tp['id'] ? 'selected' : '' ?>><?=htmlspecialchars($tp['descricao'])?></option>
+                <?php endforeach; ?>
+            </select>
+            <a href="tipos_pagamento.php?return_url=<?= urlencode("finance_edit.php?id=$id") ?>" class="w-10 h-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100" title="Novo Tipo de Pagamento">
+                <i class="fas fa-plus text-xs"></i>
+            </a>
+          </div>
         </div>
       </div>
 

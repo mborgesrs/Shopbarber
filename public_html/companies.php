@@ -10,8 +10,19 @@ $sql = 'SELECT * FROM companies WHERE (id = ? OR parent_company_id = ?)';
 $params = [$companyId, $companyId];
 
 if($q){
-    $sql .= ' AND (name LIKE ? OR fantasy_name LIKE ? OR document LIKE ? OR cpf LIKE ?)';
-    $params = array_merge($params, ["%$q%", "%$q%", "%$q%", "%$q%"]);
+    $qDigits = preg_replace('/\D/', '', $q);
+    $sql .= ' AND (name LIKE ? OR fantasy_name LIKE ? OR document LIKE ? OR cpf LIKE ? OR address LIKE ? OR neighborhood LIKE ? OR city LIKE ? OR state LIKE ? OR division LIKE ? OR cep LIKE ?';
+    $params = array_merge($params, ["%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"]);
+    
+    if($qDigits !== ''){
+        $sql .= ' OR REPLACE(REPLACE(REPLACE(document, ".", ""), "/", ""), "-", "") LIKE ?';
+        $sql .= ' OR REPLACE(REPLACE(cpf, ".", ""), "-", "") LIKE ?';
+        $sql .= ' OR REPLACE(cep, "-", "") LIKE ?';
+        $params[] = "%$qDigits%";
+        $params[] = "%$qDigits%";
+        $params[] = "%$qDigits%";
+    }
+    $sql .= ')';
 }
 
 $sql .= ' ORDER BY name ASC';
@@ -75,6 +86,10 @@ $companies = $stmt->fetchAll();
             <?php endif; ?>
         </td>
         <td class="px-4 py-1 text-right">
+          <a class="text-emerald-600 hover:text-emerald-700 mr-2 font-medium text-[11px] inline-flex items-center" href="https://wa.me/<?= preg_replace('/\D/', '', $comp['phone'] ?? '') ?>" target="_blank">
+            <i class="fab fa-whatsapp mr-1"></i>
+            WhatsApp
+          </a>
           <a class="text-slate-500 hover:text-blue-600 mr-2 font-medium text-[11px] inline-flex items-center" href="company_edit.php?id=<?=$comp['id']?>">
             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             Editar

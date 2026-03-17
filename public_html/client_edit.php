@@ -160,7 +160,12 @@ if(!$client){ header('Location: clients.php');exit; }
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone</label>
-                    <input name="phone" id="phone" value="<?=htmlspecialchars($client['phone'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm" maxlength="15" onkeyup="handlePhone(event)">
+                    <div class="flex gap-2">
+                        <input name="phone" id="phone" value="<?=htmlspecialchars($client['phone'] ?? '')?>" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm" maxlength="15" onkeyup="handlePhone(event)">
+                        <button type="button" onclick="window.open('https://wa.me/' + document.getElementById('phone').value.replace(/\D/g, ''), '_blank')" class="bg-emerald-50 text-emerald-700 px-3 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all font-bold text-xs flex items-center justify-center" title="WhatsApp">
+                            <i class="fab fa-whatsapp text-sm"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label id="lbl_date_nascto" class="block text-xs font-bold text-slate-500 uppercase mb-1"><?= ($client['person_type'] ?? '') === 'Juridica' ? 'Fundação' : 'Nascimento' ?></label>

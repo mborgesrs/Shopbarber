@@ -6,36 +6,6 @@ require_once __DIR__ . '/../lib/accounts.php';
 
 $company_id = $_SESSION['company_id'];
 
-if($_SERVER['REQUEST_METHOD']==='POST'){
-  $type = $_POST['type'];
-  $value = $_POST['value'];
-  $saldo_field = $_POST['saldo'] ?: 0;
-  
-  // Business Rule: For 'Pagar' and 'Receber', saldo = value
-  if($type == 'Pagar' || $type == 'Receber') {
-    $saldo_to_save = $value;
-  } else {
-    $saldo_to_save = $saldo_field;
-  }
-
-  $stmt=$pdo->prepare('INSERT INTO finance (date,data_vencimento,client_id,observation,value,saldo,type,portador_id,conta_id,tipo_pagamento_id,company_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
-  $stmt->execute([
-    $_POST['date'], 
-    $_POST['data_vencimento']?:null, 
-    $_POST['client_id']?:null, 
-    $_POST['observation'], 
-    $value, 
-    $saldo_to_save,
-    $type, 
-    $_POST['portador_id']?:null,
-    $_POST['conta_id']?:null,
-    $_POST['tipo_pagamento_id']?:null,
-    $company_id
-  ]);
-  recalculateAccountTotals($company_id, $pdo);
-  header('Location: finance.php');exit;
-}
-
 // Filters
 $from = $_GET['from'] ?? '';
 $to = $_GET['to'] ?? '';
@@ -70,18 +40,6 @@ $saldo = $entradas - $saidas;
 $stmt=$pdo->prepare('SELECT id,name FROM clients WHERE company_id=? ORDER BY name');
 $stmt->execute([$company_id]);
 $clients = $stmt->fetchAll();
-
-$portadores = $pdo->prepare('SELECT id,nome FROM portadores WHERE company_id = ? ORDER BY nome');
-$portadores->execute([$company_id]);
-$portadores = $portadores->fetchAll();
-
-$contas = $pdo->prepare("SELECT id,codigo,descricao,tipo FROM contas WHERE company_id = ? AND ativo=1 ORDER BY codigo");
-$contas->execute([$company_id]);
-$contas = $contas->fetchAll();
-
-$tipos_pagamento = $pdo->prepare('SELECT id,descricao FROM tipos_pagamento WHERE company_id = ? AND ativo=1 ORDER BY descricao');
-$tipos_pagamento->execute([$company_id]);
-$tipos_pagamento = $tipos_pagamento->fetchAll();
 ?>
 <?php include __DIR__ . '/../views/header.php'; ?>
 
@@ -123,90 +81,10 @@ $tipos_pagamento = $tipos_pagamento->fetchAll();
         </div>
     </div>
 
-    <button onclick="document.getElementById('form').classList.toggle('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-100 font-bold text-sm ml-2">
+    <a href="finance_create.php" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-100 font-bold text-sm ml-2">
         <i class="fas fa-plus"></i> Novo
-    </button>
+    </a>
   </div>
-</div>
-
-<div id="form" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-fade-in-down">
-  <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-    <i class="fas fa-edit text-indigo-600"></i> Adicionar Lançamento
-  </h3>
-  <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Data Lançamento</label>
-        <input type="date" name="date" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>">
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Vencimento</label>
-        <input type="date" name="data_vencimento" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>">
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Pessoa / Fornecedor</label>
-        <select name="client_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-          <option value="">-- Selecione --</option>
-          <?php foreach($clients as $c): ?><option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option><?php endforeach; ?>
-        </select>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Tipo</label>
-        <select name="type" id="main_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" onchange="syncSaldo()">
-          <option>Pagar</option><option>Receber</option><option>Entrada</option><option>Saida</option>
-        </select>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Valor</label>
-        <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
-            <input name="value" id="main_value" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" oninput="syncSaldo()">
-        </div>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Saldo</label>
-        <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
-            <input name="saldo" id="main_saldo" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-        </div>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Portador</label>
-        <select name="portador_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-          <option value="">-- Selecione --</option>
-          <?php foreach($portadores as $p): ?><option value="<?=$p['id']?>"><?=htmlspecialchars($p['nome'])?></option><?php endforeach; ?>
-        </select>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Conta Contábil</label>
-        <select name="conta_id" id="main_conta_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" onchange="checkContaTipo(this)">
-          <option value="">-- Selecione --</option>
-          <?php foreach($contas as $c): ?>
-            <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-gray-50' : '' ?>">
-                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
-            </option>
-          <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Tipo Pagamento</label>
-        <select name="tipo_pagamento_id" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-          <option value="">-- Selecione --</option>
-          <?php foreach($tipos_pagamento as $tp): ?><option value="<?=$tp['id']?>"><?=htmlspecialchars($tp['descricao'])?></option><?php endforeach; ?>
-        </select>
-    </div>
-    <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase">Observação</label>
-        <input name="observation" placeholder="Ex: Pagamento de luz, Venda de produto..." class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-    </div>
-    <div class="col-span-1 md:col-span-3 pt-2 flex gap-2">
-        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-100 w-full md:w-auto">
-            Salvar Lançamento
-        </button>
-        <button type="button" onclick="document.getElementById('form').classList.add('hidden')" class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200">
-            Voltar
-        </button>
-    </div>
-  </form>
 </div>
 
 <!-- Filters -->
@@ -340,43 +218,3 @@ $tipos_pagamento = $tipos_pagamento->fetchAll();
   </div>
 </div>
 <?php include __DIR__ . '/../views/footer.php'; ?>
-
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-function syncSaldo() {
-    const type = document.getElementById('main_type').value;
-    const value = document.getElementById('main_value').value;
-    const saldoField = document.getElementById('main_saldo');
-    
-    if (type === 'Pagar' || type === 'Receber') {
-        // Replace comma with dot to ensure it's a valid number for JS, though browser might handle it
-        saldoField.value = value;
-        saldoField.readOnly = true;
-        saldoField.classList.add('bg-gray-50', 'text-gray-500');
-    } else {
-        saldoField.readOnly = false;
-        saldoField.classList.remove('bg-gray-50', 'text-gray-500');
-    }
-}
-
-function checkContaTipo(select) {
-    const selectedOption = select.options[select.selectedIndex];
-    const tipo = selectedOption.getAttribute('data-tipo');
-    
-    if (tipo === 'Sintetica') {
-        Swal.fire({
-            title: 'Atenção!',
-            text: 'Você só pode selecionar uma conta ANALÍTICA dentro do grupo.',
-            icon: 'warning',
-            confirmButtonText: 'Entendi',
-            confirmButtonColor: '#4f46e5'
-        });
-        select.value = '';
-    }
-}
-
-// Initialize on load
-document.addEventListener('DOMContentLoaded', syncSaldo);
-</script>

@@ -1,222 +1,249 @@
 <?php
-session_start(); 
-if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
+session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../lib/accounts.php';
 
-$error = '';
-$success = '';
+$company_id = $_SESSION['company_id'];
 
 if($_SERVER['REQUEST_METHOD']==='POST'){
   $type = $_POST['type'];
+  $value = str_replace(',', '.', $_POST['value']); // Ensure numeric format
+  $saldo_field = str_replace(',', '.', $_POST['saldo'] ?: 0);
   
-  // Business rule: Auto-set status based on type
-  if($type == 'Entrada' || $type == 'Saida' || $type == 'cRecebido' || $type == 'dPago') {
-    $status = 'Liquidado';
+  // Business Rule: For 'Pagar' and 'Receber', saldo = value
+  if($type == 'Pagar' || $type == 'Receber') {
+    $saldo_to_save = $value;
   } else {
-    // Pagar or Receber
-    $status = 'Aberto';
+    $saldo_to_save = $saldo_field;
   }
-  
-  try {
-    $stmt=$pdo->prepare('INSERT INTO finance (date,client_id,observation,value,saldo,type,portador_id,conta_id,tipo_pagamento_id,status,data_vencimento,data_pagamento,company_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())');
-    $stmt->execute([
-      $_POST['date'], 
-      $_POST['client_id']?:null, 
-      $_POST['observation'], 
-      $_POST['value'],
-      $_POST['value'], // saldo begins equal to value
-      $type,
-      $_POST['portador_id']?:null,
-      $_POST['conta_id']?:null,
-      $_POST['tipo_pagamento_id']?:null,
-      $status,
-      $_POST['data_vencimento']?:null,
-      $_POST['data_pagamento']?:null,
-      $_SESSION['company_id']
-    ]);
-    
-    recalculateAccountTotals($_SESSION['company_id'], $pdo);
-    
-    header('Location: finance.php');
-    exit;
-  } catch(PDOException $e) {
-    $error = 'Erro ao criar registro: ' . $e->getMessage();
-  }
+
+  $stmt=$pdo->prepare('INSERT INTO finance (date,data_vencimento,client_id,observation,value,saldo,type,portador_id,conta_id,tipo_pagamento_id,company_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+  $stmt->execute([
+    $_POST['date'], 
+    $_POST['data_vencimento']?:null, 
+    $_POST['client_id']?:null, 
+    $_POST['observation'], 
+    $value, 
+    $saldo_to_save,
+    $type, 
+    $_POST['portador_id']?:null,
+    $_POST['conta_id']?:null,
+    $_POST['tipo_pagamento_id']?:null,
+    $company_id
+  ]);
+  recalculateAccountTotals($company_id, $pdo);
+  header('Location: finance.php');exit;
 }
 
-// Get all reference data
-$companyId = $_SESSION['company_id'];
-$clients = $pdo->prepare('SELECT id,name,email,phone,company FROM clients WHERE company_id = ? ORDER BY name');
-$clients->execute([$companyId]);
-$clients = $clients->fetchAll();
-$portadores = $pdo->query('SELECT id,nome FROM portadores ORDER BY nome')->fetchAll();
-$contas = $pdo->query('SELECT id,codigo,descricao FROM contas WHERE ativo=1 ORDER BY codigo')->fetchAll();
-$tipos_pagamento = $pdo->query('SELECT id,descricao FROM tipos_pagamento WHERE ativo=1 ORDER BY descricao')->fetchAll();
+// Fetch data for form
+$stmt=$pdo->prepare('SELECT id,name FROM clients WHERE company_id=? ORDER BY name');
+$stmt->execute([$company_id]);
+$clients = $stmt->fetchAll();
+
+$portadores = $pdo->prepare('SELECT id,nome FROM portadores WHERE company_id = ? ORDER BY nome');
+$portadores->execute([$company_id]);
+$portadores = $portadores->fetchAll();
+
+$contas = $pdo->prepare("SELECT id,codigo,descricao,tipo FROM contas WHERE company_id = ? AND ativo=1 ORDER BY codigo");
+$contas->execute([$company_id]);
+$contas = $contas->fetchAll();
+
+$tipos_pagamento = $pdo->prepare('SELECT id,descricao FROM tipos_pagamento WHERE company_id = ? AND ativo=1 ORDER BY descricao');
+$tipos_pagamento->execute([$company_id]);
+$tipos_pagamento = $tipos_pagamento->fetchAll();
+
+include __DIR__ . '/../views/header.php';
 ?>
-<?php include __DIR__ . '/../views/header.php'; ?>
 
-<!-- Tom Select CSS -->
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
-<style>
-  .ts-control {
-    border-color: #cbd5e1 !important; /* slate-300 */
-    padding: 0.5rem !important;
-    border-radius: 0.25rem !important;
-  }
-  .ts-wrapper.focus .ts-control {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important; /* blue-500 ring */
-    border-color: #3b82f6 !important;
-  }
-</style>
-
-<div class="max-w-4xl mx-auto">
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="text-2xl font-semibold text-slate-800">Novo Lançamento Financeiro</h2>
-  </div>
-
-  <?php if($error): ?>
-    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-sm">
-      <p class="font-medium"><?= htmlspecialchars($error) ?></p>
+<div class="max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Novo Lançamento</h2>
+            <p class="text-sm text-gray-500">Insira as informações do novo movimento financeiro.</p>
+        </div>
+        <a href="finance.php" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl flex items-center gap-2 transition-colors font-bold text-sm">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
     </div>
-  <?php endif; ?>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-    <form method="post" id="financeForm">
-      <!-- Row 1: Datas -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Data *</label>
-          <input type="date" name="date" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" value="<?= date('Y-m-d') ?>" required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Data Vencimento</label>
-          <input type="date" name="data_vencimento" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Data Pagamento</label>
-          <input type="date" name="data_pagamento" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-        </div>
-      </div>
-
-      <!-- Row 2: Tipo, Situação, Valor -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo *</label>
-          <select name="type" id="tipo" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" required onchange="updateSituacao()">
-            <option value="">-- Selecione --</option>
-            <option value="Pagar">Pagar (Despesa)</option>
-            <option value="Receber">Receber (Receita)</option>
-            <option value="Entrada">Entrada</option>
-            <option value="Saida">Saída</option>
-            <option value="cRecebido">Conta Recebida</option>
-            <option value="dPago">Despesa Paga</option>
-          </select>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Situação</label>
-          <input type="text" id="situacao" readonly class="w-full border border-slate-300 rounded p-2 bg-slate-100 text-slate-600 cursor-not-allowed" value="Aberto" placeholder="Automático">
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Valor *</label>
-          <input name="value" type="number" step="0.01" placeholder="0.00" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" required>
-        </div>
-      </div>
-
-      <!-- Row 3: Cliente -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-slate-700 mb-1">Cliente / Fornecedor</label>
-        <select name="client_id" id="client_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700" placeholder="Pesquisar por nome, email, telefone ou empresa...">
-          <option value="">-- Selecione --</option>
-          <?php foreach($clients as $c): ?>
-            <option value="<?=$c['id']?>">
-              <?=htmlspecialchars($c['name'])?> 
-              <?= !empty($c['email']) ? ' - ' . htmlspecialchars($c['email']) : '' ?>
-              <?= !empty($c['phone']) ? ' - ' . htmlspecialchars($c['phone']) : '' ?>
-              <?= !empty($c['company']) ? ' (' . htmlspecialchars($c['company']) . ')' : '' ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <!-- Row 4: Portador, Conta, Tipo Pagamento -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Portador</label>
-          <select name="portador_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-            <option value="">-- Selecione --</option>
-            <?php foreach($portadores as $p): ?>
-              <option value="<?=$p['id']?>"><?=htmlspecialchars($p['nome'])?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Conta Contábil</label>
-          <select name="conta_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-            <option value="">-- Selecione --</option>
-            <?php foreach($contas as $c): ?>
-              <option value="<?=$c['id']?>">
-                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Pagamento</label>
-          <select name="tipo_pagamento_id" class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700">
-            <option value="">-- Selecione --</option>
-            <?php foreach($tipos_pagamento as $tp): ?>
-              <option value="<?=$tp['id']?>"><?=htmlspecialchars($tp['descricao'])?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-      </div>
-
-
-      <!-- Row 5: Observação -->
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-slate-700 mb-1">Observação</label>
-        <textarea name="observation" rows="2" placeholder="Observações sobre este lançamento..." class="w-full border border-slate-300 rounded p-2 focus:ring-blue-500 text-slate-700"></textarea>
-      </div>
-
-      <!-- Buttons -->
-      <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-        <a href="finance.php" class="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded hover:bg-slate-50 font-medium transition-colors">Voltar</a>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium shadow-sm transition-colors">Salvar Lançamento</button>
-      </div>
-    </form>
-  </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+        <form method="post" id="financeForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Data Lançamento</label>
+                <input type="date" name="date" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>" required>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Vencimento</label>
+                <input type="date" name="data_vencimento" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value="<?=date('Y-m-d')?>">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Pessoa / Fornecedor</label>
+                <div class="flex gap-2">
+                    <select name="client_id" class="flex-1 border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm">
+                        <option value="">-- Selecione --</option>
+                        <?php foreach($clients as $c): ?><option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option><?php endforeach; ?>
+                    </select>
+                    <a href="client_create.php?return_url=finance_create.php" class="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100" title="Nova Pessoa">
+                        <i class="fas fa-plus text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Tipo</label>
+                <select name="type" id="main_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" onchange="syncSaldo()" required>
+                    <option value="Pagar">Pagar</option>
+                    <option value="Receber">Receber</option>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Saida">Saída</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Valor</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
+                    <input name="value" id="main_value" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" oninput="syncSaldo()" required>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Saldo</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">R$</span>
+                    <input name="saldo" id="main_saldo" placeholder="0,00" class="w-full border-gray-200 border p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Portador</label>
+                <div class="flex gap-2">
+                    <select name="portador_id" class="flex-1 border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm">
+                        <option value="">-- Selecione --</option>
+                        <?php foreach($portadores as $p): ?><option value="<?=$p['id']?>"><?=htmlspecialchars($p['nome'])?></option><?php endforeach; ?>
+                    </select>
+                    <a href="portadores.php?return_url=finance_create.php" class="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100" title="Novo Portador">
+                        <i class="fas fa-plus text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Conta Contábil</label>
+                <div class="flex gap-2">
+                    <select name="conta_id" id="main_conta_id" class="flex-1 border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" onchange="checkContaTipo(this)" required>
+                        <option value="">-- Selecione --</option>
+                        <?php foreach($contas as $c): ?>
+                            <option value="<?=$c['id']?>" data-tipo="<?=$c['tipo']?>" class="<?= $c['tipo'] == 'Sintetica' ? 'font-bold bg-gray-50' : '' ?>">
+                                <?=htmlspecialchars($c['codigo'])?> - <?=htmlspecialchars($c['descricao'])?> (<?= $c['tipo'] ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <a href="contas.php?return_url=finance_create.php" class="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100" title="Nova Conta">
+                        <i class="fas fa-plus text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Tipo Pagamento</label>
+                <div class="flex gap-2">
+                    <select name="tipo_pagamento_id" class="flex-1 border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm">
+                        <option value="">-- Selecione --</option>
+                        <?php foreach($tipos_pagamento as $tp): ?><option value="<?=$tp['id']?>"><?=htmlspecialchars($tp['descricao'])?></option><?php endforeach; ?>
+                    </select>
+                    <a href="tipos_pagamento.php?return_url=finance_create.php" class="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100" title="Novo Tipo de Pagamento">
+                        <i class="fas fa-plus text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-span-1 md:col-span-3 space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase">Observação</label>
+                <textarea name="observation" id="main_observation" rows="3" placeholder="Ex: Pagamento de luz, Venda de produto..." class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"></textarea>
+            </div>
+            <div class="col-span-1 md:col-span-3 pt-4">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                    <i class="fas fa-check"></i> Salvar Lançamento
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<?php include __DIR__ . '/../views/footer.php'; ?>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  new TomSelect("#client_id", {
-    create: false,
-    sortField: {
-      field: "text",
-      direction: "asc"
+// State Persistence Logic
+const FORM_ID = 'finance_create_state';
+const form = document.getElementById('financeForm');
+
+function saveState() {
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    sessionStorage.setItem(FORM_ID, JSON.stringify(data));
+}
+
+function restoreState() {
+    const savedData = sessionStorage.getItem(FORM_ID);
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        Object.keys(data).forEach(key => {
+            const field = form.elements[key];
+            if (field) {
+                field.value = data[key];
+            }
+        });
+        syncSaldo(); // Re-trigger dependent field logic
     }
-  });
+}
+
+// Attach event listeners for saving
+form.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', saveState);
+    el.addEventListener('change', saveState);
 });
 
-function updateSituacao() {
-  const tipo = document.getElementById('tipo').value;
-  const situacao = document.getElementById('situacao');
-  
-  if (tipo === 'Entrada' || tipo === 'Saida' || tipo === 'cRecebido' || tipo === 'dPago') {
-    situacao.value = 'Liquidado';
-  } else if (tipo === 'Pagar' || tipo === 'Receber') {
-    situacao.value = 'Aberto';
-  } else {
-    situacao.value = '';
-  }
+// Clear state on submit
+form.addEventListener('submit', () => {
+    sessionStorage.removeItem(FORM_ID);
+});
+
+function syncSaldo() {
+    const type = document.getElementById('main_type').value;
+    const value = document.getElementById('main_value').value;
+    const saldoField = document.getElementById('main_saldo');
+    
+    if (type === 'Pagar' || type === 'Receber') {
+        saldoField.value = value;
+        saldoField.readOnly = true;
+        saldoField.classList.add('bg-gray-50', 'text-gray-500');
+    } else {
+        saldoField.readOnly = false;
+        saldoField.classList.remove('bg-gray-50', 'text-gray-500');
+    }
 }
+
+function checkContaTipo(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const tipo = selectedOption.getAttribute('data-tipo');
+    
+    if (tipo === 'Sintetica') {
+        Swal.fire({
+            title: 'Atenção!',
+            text: 'Você só pode selecionar uma conta ANALÍTICA dentro do grupo.',
+            icon: 'warning',
+            confirmButtonText: 'Entendi',
+            confirmButtonColor: '#4f46e5'
+        });
+        select.value = '';
+        saveState();
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    restoreState();
+    syncSaldo();
+});
 </script>
 
-<?php include __DIR__ . '/../views/footer.php'; ?>

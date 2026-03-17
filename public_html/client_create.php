@@ -1,6 +1,8 @@
 <?php
 session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__.'/../db.php';
+$return_url = $_GET['return_url'] ?? 'clients.php';
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
   $stmt = $pdo->prepare('INSERT INTO clients (name,email,phone,company,notes,date_nascto,division,cep,address,number,neighborhood,city,state,cpf,cnpj,person_type,company_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
   $stmt->execute([
@@ -22,20 +24,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $_POST['person_type']??'Fisica',
     $_SESSION['company_id']
   ]);
-  header('Location: clients.php');exit;
+  header('Location: ' . $return_url);exit;
 }
 ?>
 <?php include __DIR__.'/../views/header.php'; ?>
 
 <div class="max-w-4xl mx-auto px-4 py-2">
     <div class="flex items-center gap-3 mb-3">
-        <a href="clients.php" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
+        <a href="<?= htmlspecialchars($return_url) ?>" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all shadow-sm">
             <i class="fas fa-arrow-left text-xs"></i>
         </a>
         <h2 class="text-lg font-bold text-gray-800">Nova Pessoa</h2>
     </div>
 
-    <form method="post" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+    <form method="post" action="client_create.php?return_url=<?= urlencode($return_url) ?>" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-4">
             <div class="md:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
@@ -138,7 +140,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         </div>
 
         <div class="flex items-center justify-between pt-5 border-t border-slate-100">
-            <a href="clients.php" class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-xl hover:bg-slate-50 font-bold transition-colors text-sm">Voltar</a>
+            <a href="<?= htmlspecialchars($return_url) ?>" class="bg-white border border-slate-200 text-slate-600 px-5 py-2 rounded-xl hover:bg-slate-50 font-bold transition-colors text-sm">Voltar</a>
             <button class="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 text-sm">Cadastrar Pessoa</button>
         </div>
     </form>

@@ -2,6 +2,7 @@
 session_start(); if(!isset($_SESSION['user_id'])){ header('Location: login.php');exit; }
 require_once __DIR__.'/../db.php';
 $company_id = $_SESSION['company_id'];
+$return_url = $_GET['return_url'] ?? 'portadores.php';
 
 if($_SERVER['REQUEST_METHOD']==='POST'){
     if(isset($_POST['delete_id'])){
@@ -14,7 +15,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         $stmt = $pdo->prepare('INSERT INTO portadores (nome, company_id) VALUES (?, ?)');
         $stmt->execute([$_POST['name'], $company_id]);
     }
-    header('Location: portadores.php'); exit;
+    header('Location: ' . $return_url); exit;
 }
 
 $stmt = $pdo->prepare('SELECT * FROM portadores WHERE company_id = ? ORDER BY nome');
@@ -25,7 +26,7 @@ $list = $stmt->fetchAll();
 
 <div class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-4">
-        <a href="finance.php" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors shadow-sm" title="Voltar">
+        <a href="<?= htmlspecialchars($return_url) ?>" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors shadow-sm" title="Voltar">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h2 class="text-2xl font-bold text-gray-800">Portadores</h2>
@@ -87,7 +88,7 @@ $list = $stmt->fetchAll();
             <h3 id="modal-title" class="font-bold text-lg text-gray-800">Novo Portador</h3>
             <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl font-light">×</button>
         </div>
-        <form method="post" class="p-6">
+        <form method="post" action="portadores.php?return_url=<?= urlencode($return_url) ?>" class="p-6">
             <input type="hidden" name="id" id="field-id">
             <div class="mb-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">Nome do Portador</label>

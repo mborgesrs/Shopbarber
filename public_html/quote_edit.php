@@ -505,15 +505,16 @@ document.getElementById('addItem').addEventListener('click', function() {
         });
     }
     renderItems();
-    sel.value = '';
+    if(sel.tomselect) sel.tomselect.clear(); else sel.value = '';
 });
 
 // Init
 renderItems();
 
 // TomSelects
-new TomSelect('#client_id',{create: false, sortField: {field: "text", direction: "asc"}});
-new TomSelect('#professional_id',{create: false, sortField: {field: "text", direction: "asc"}});
+new TomSelect('#client_id',{create: false});
+new TomSelect('#professional_id',{create: false});
+new TomSelect('#productSelect',{create: false});
 
 </script>
 <?php include __DIR__ . '/../views/footer.php'; ?>

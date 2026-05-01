@@ -90,10 +90,36 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   
   $send = isset($_POST['send_whatsapp']);
   if($send){
-    $c = $pdo->prepare('SELECT phone,name FROM clients WHERE id=? AND company_id=?'); $c->execute([$client_id, $company_id]); $client = $c->fetch();
+    // Documentação: Busca os dados de contato do cliente
+    $c = $pdo->prepare('SELECT phone,name FROM clients WHERE id=? AND company_id=?'); 
+    $c->execute([$client_id, $company_id]); 
+    $client = $c->fetch();
+    
     $phone = preg_replace('/\D/','',$client['phone']);
-    $msg = rawurlencode("Olá {$client['name']}, seu agendamento está confirmado em " . date('d/m/Y H:i', strtotime($date_time)) . ". Obrigado!");
-    if($phone){ header('Location: https://wa.me/'.$phone.'?text='.$msg); exit; }
+    $msg_text = "Olá {$client['name']}, seu agendamento está confirmado em " . date('d/m/Y H:i', strtotime($date_time)) . ". Obrigado!";
+    $msg_encoded = rawurlencode($msg_text);
+    
+    if($phone){
+        // Documentação: Busca as configurações do Evolution API no banco de dados
+        $setStmt = $pdo->prepare('SELECT evolution_api_url, evolution_instance, evolution_api_key, evolution_active FROM settings WHERE company_id=?');
+        $setStmt->execute([$company_id]);
+        $apiSettings = $setStmt->fetch();
+
+        // Documentação: Se o Evolution API estiver ativo e a URL configurada, dispara via API
+        if (!empty($apiSettings['evolution_active']) && !empty($apiSettings['evolution_api_url'])) {
+            require_once __DIR__ . '/../lib/EvolutionAPI.php';
+            $evo = new EvolutionAPI($apiSettings['evolution_api_url'], $apiSettings['evolution_instance'], $apiSettings['evolution_api_key']);
+            
+            // Documentação: Executa o envio sem interromper a navegação do usuário
+            $evo->sendText($phone, $msg_text);
+            
+            // Obs: Diferente do link wa.me, aqui não damos 'exit' para que a página possa redirecionar para 'quotes.php' normalmente abaixo
+        } else {
+            // Documentação: Comportamento Padrão (Redirecionamento manual para WhatsApp Web/App)
+            header('Location: https://wa.me/'.$phone.'?text='.$msg_encoded); 
+            exit; 
+        }
+    }
   }
   
   $redirect = ($_POST['from'] ?? '') === 'calendar' ? 'calendar.php' : 'quotes.php';
@@ -192,7 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <?php include __DIR__ . '/../views/header.php'; ?>
-<div class="w-full max-w-4xl mx-auto">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<div class="w-full max-w-5xl mx-auto">
     <div class="flex items-center gap-3 mb-4">
         <?php 
         $backUrl = ($from_calendar ? 'calendar.php' : 'quotes.php');
@@ -208,17 +236,17 @@ document.addEventListener('DOMContentLoaded', () => {
       <input type="hidden" name="from" value="<?= $from_calendar ? 'calendar' : '' ?>">
       <input type="hidden" name="month" value="<?= htmlspecialchars($month_cal) ?>">
       <input type="hidden" name="year" value="<?= htmlspecialchars($year_cal) ?>">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
+          <div class="md:col-span-4">
               <label class="block text-xs font-bold text-gray-700 mb-1">Pessoa</label>
-              <select name="client_id" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required>
+              <select name="client_id" id="client_id" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required>
                   <option value="">Selecione uma pessoa...</option>
                   <?php foreach($clients as $c): ?>
                       <option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?> (<?=$c['phone']?>)</option>
                   <?php endforeach; ?>
               </select>
           </div>
-          <div>
+          <div class="md:col-span-3">
               <label class="block text-xs font-bold text-gray-700 mb-1">Profissional</label>
               <select name="professional_id" id="professional_id" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
                   <option value="">Selecione um profissional...</option>
@@ -227,11 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
                   <?php endforeach; ?>
               </select>
           </div>
-          <div>
+          <div class="md:col-span-2">
               <label class="block text-xs font-bold text-gray-700 mb-1">Data</label>
               <input type="date" id="date_select" value="<?= $pre_date ?: date('Y-m-d') ?>" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="checkAvailability()">
           </div>
-          <div>
+          <div class="md:col-span-3">
               <label class="block text-xs font-bold text-gray-700 mb-1">Horários Disponíveis</label>
               <select id="time_select" class="w-full border border-gray-200 p-2 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none" required onchange="updateDateTime()">
                   <option value="">Selecione data/prof...</option>
@@ -309,4 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </form>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    new TomSelect('#client_id',{create: false});
+    new TomSelect('#professional_id',{create: false});
+    new TomSelect('#productSelect',{create: false});
+});
+</script>
 <?php include __DIR__ . '/../views/footer.php'; ?>

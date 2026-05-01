@@ -1,4 +1,4 @@
-﻿(function(){
+(function(){
   function init(){
     const addBtn = document.getElementById('addItem');
     const productSelect = document.getElementById('productSelect');
@@ -22,6 +22,7 @@
     addBtn.addEventListener('click', ()=>{
       const v = productSelect.value; if(!v) return; const [id,price] = v.split('|'); const name = productSelect.options[productSelect.selectedIndex].text;
       items.push({id:parseInt(id),name,price:parseFloat(price),qty:1}); render();
+      if(productSelect.tomselect) productSelect.tomselect.clear(); else productSelect.value = '';
     });
     document.addEventListener('click', function(e){
       if(e.target.classList.contains('remove')){ const idx = e.target.dataset.idx; items.splice(idx,1); render(); }

@@ -27,18 +27,26 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $asaas_api_key = $_POST['asaas_api_key'] ?? null;
     $asaas_environment = $_POST['asaas_environment'] ?? 'sandbox';
     
-    // Update text data in settings table
+    // Documentação: Recebe os dados do Evolution API vindos do formulário
+    $evolution_api_url = rtrim($_POST['evolution_api_url'] ?? '', '/');
+    $evolution_instance = $_POST['evolution_instance'] ?? '';
+    $evolution_api_key = $_POST['evolution_api_key'] ?? '';
+    $evolution_active = isset($_POST['evolution_active']) ? 1 : 0;
+    
+    // Documentação: Atualiza a tabela settings adicionando os campos do Evolution API na query
     $stmt = $pdo->prepare("UPDATE settings SET 
         company_name=?, fantasy_name=?, phone=?, email=?, address=?, 
         pix_key_type=?, pix_key=?, pix_merchant_name=?, pix_merchant_city=?, pix_bank_id=?,
         cnpj=?, cpf=?, cep=?, logradouro=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?,
-        asaas_api_key=?, asaas_environment=?, apicpf_key=?
+        asaas_api_key=?, asaas_environment=?, apicpf_key=?,
+        evolution_api_url=?, evolution_instance=?, evolution_api_key=?, evolution_active=?
         WHERE company_id=?");
     $stmt->execute([
         $company_name, $fantasy_name, $phone, $email, $address, 
         $_POST['pix_key_type'], $_POST['pix_key'], $_POST['pix_merchant_name'], $_POST['pix_merchant_city'], $_POST['pix_bank_id'],
         $cnpj, $cpf, $cep, $logradouro, $numero, $complemento, $bairro, $cidade, $estado,
         $asaas_api_key, $asaas_environment, $_POST['apicpf_key'] ?? null,
+        $evolution_api_url, $evolution_instance, $evolution_api_key, $evolution_active,
         $company_id
     ]);
 
@@ -369,6 +377,58 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
                 <p class="text-[11px] text-gray-400 italic">
                     <i class="fas fa-info-circle mr-1"></i> 
                     Esta chave é utilizada para buscar automaticamente os dados do cliente pelo CPF. Você pode obtê-la no painel do <a href="https://apicpf.com" target="_blank" class="text-indigo-600 underline">apicpf.com</a>.
+                </p>
+            </div>
+        </div>
+
+        <!-- Integração Evolution API (WhatsApp) -->
+        <!-- Documentação: Novo bloco de configuração para a API do WhatsApp -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2 font-bold text-sm text-gray-700 uppercase tracking-wider">
+                <i class="fab fa-whatsapp text-emerald-500"></i>
+                Integração WhatsApp (Evolution API)
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1 md:col-span-2">
+                        <!-- Documentação: Campo para informar a URL base da Evolution API -->
+                        <label class="text-xs font-bold text-gray-500 uppercase">URL da API (Endpoint)</label>
+                        <input type="text" name="evolution_api_url" value="<?= htmlspecialchars($settings['evolution_api_url'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="https://api.seudominio.com.br">
+                    </div>
+                    <div class="space-y-1">
+                        <!-- Documentação: Campo para informar o nome da Instância no painel do Evolution -->
+                        <label class="text-xs font-bold text-gray-500 uppercase">Nome da Instância</label>
+                        <input type="text" name="evolution_instance" value="<?= htmlspecialchars($settings['evolution_instance'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="barber123">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1 md:col-span-2">
+                        <!-- Documentação: Campo para informar a Global API Key ou Instance API Key -->
+                        <label class="text-xs font-bold text-gray-500 uppercase">Chave da API (API Key)</label>
+                        <div class="relative">
+                            <input type="password" name="evolution_api_key" value="<?= htmlspecialchars($settings['evolution_api_key'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="Sua Chave API">
+                            <button type="button" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center pt-5">
+                        <!-- Documentação: Toggle para Ativar/Desativar os disparos automatizados -->
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <div class="relative">
+                                <input type="checkbox" name="evolution_active" value="1" <?= (!empty($settings['evolution_active'])) ? 'checked' : '' ?> class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-700">Ativar Envios Automáticos</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <p class="text-[11px] text-gray-400 italic">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    Configure os dados da sua Evolution API. Quando ativo, o sistema enviará as confirmações de agendamento em segundo plano, direto pelo seu servidor, sem precisar abrir o WhatsApp Web.
                 </p>
             </div>
         </div>

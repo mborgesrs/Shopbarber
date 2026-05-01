@@ -6,7 +6,7 @@ $return_url = $_GET['return_url'] ?? 'clients.php';
 if($_SERVER['REQUEST_METHOD']==='POST'){
   $stmt = $pdo->prepare('INSERT INTO clients (name,email,phone,company,notes,date_nascto,division,cep,address,number,neighborhood,city,state,cpf,cnpj,person_type,company_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
   $stmt->execute([
-    $_POST['name'],
+    strtoupper($_POST['name']),
     $_POST['email'],
     $_POST['phone'],
     $_POST['company']??null,
@@ -41,7 +41,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-4">
             <div class="md:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
-                <input name="name" id="name" required placeholder="Ex: João Silva" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
+                <input name="name" id="name" required placeholder="Ex: JOÃO SILVA" class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm uppercase">
             </div>
 
             <div>

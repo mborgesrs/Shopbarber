@@ -84,11 +84,8 @@ $totalClients = count($clients);
         <tr class="hover:bg-gray-50/80 transition-colors group">
           <td class="px-6 py-2">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 font-bold uppercase text-xs">
-                    <?= substr($c['name'], 0, 1) ?>
-                </div>
                 <div class="flex flex-col">
-                    <span class="text-gray-900 font-bold text-sm"><?=htmlspecialchars($c['name'])?></span>
+                    <span class="text-gray-900 font-bold text-sm uppercase"><?=htmlspecialchars($c['name'])?></span>
                     <span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full font-bold uppercase w-fit"><?=htmlspecialchars($c['person_type'] ?? 'Física')?></span>
                 </div>
             </div>
@@ -108,9 +105,12 @@ $totalClients = count($clients);
                         </a>
                     <?php endif; ?>
                 </div>
-                <span class="text-[10px] text-gray-400"><?=htmlspecialchars($c['email'])?></span>
+                <?php if($c['email']): ?>
+                <span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded w-fit font-medium mt-1">
+                    <i class="fas fa-envelope mr-1 opacity-50"></i><?=htmlspecialchars($c['email'])?>
+                </span>
+                <?php endif; ?>
             </div>
-
           </td>
           <td class="px-6 py-2 text-right">
             <div class="flex justify-end gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">

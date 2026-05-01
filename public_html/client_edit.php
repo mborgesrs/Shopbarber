@@ -17,7 +17,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
       $stmt = $pdo->prepare('UPDATE clients SET name=:name,email=:email,phone=:phone,company=:company,notes=:notes,date_nascto=:date_nascto,division=:division,cep=:cep,address=:address,number=:number,neighborhood=:neighborhood,city=:city,state=:state,cpf=:cpf,cnpj=:cnpj,person_type=:person_type WHERE id=:id');
       $date_nascto = !empty($_POST['date_nascto']) ? $_POST['date_nascto'] : null;
       $stmt->execute([
-        ':name'=>$name,
+        ':name'=>strtoupper($name),
         ':email'=>$_POST['email']?:null,
         ':phone'=>$_POST['phone']?:null,
         ':company'=>$_POST['company']??null,
@@ -76,7 +76,7 @@ if(!$client){ header('Location: clients.php');exit; }
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-4">
             <div class="md:col-span-2">
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo / Razão Social</label>
-                <input name="name" id="name" value="<?=htmlspecialchars($client['name'] ?? '')?>" required class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm">
+                <input name="name" id="name" value="<?=htmlspecialchars($client['name'] ?? '')?>" required class="w-full border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-slate-700 text-sm uppercase">
             </div>
 
             <div>

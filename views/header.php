@@ -89,8 +89,21 @@ if($current_company_id) {
             </button>
             <div id="menu-cadastros" class="hidden pl-8 space-y-1 mt-1">
                 <a href="/clients.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Pessoas</a>
-                <a href="/products.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Produtos</a>
-                <a href="/inventory.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-colors">Estoque</a>
+            </div>
+        </div>
+
+        <!-- Gestão de Materiais -->
+        <div class="pt-1">
+            <button onclick="toggleMenu('menu-materiais')" class="w-full flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors group">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-box text-blue-500 w-5"></i>
+                    <span class="font-medium text-sm">Gestão de Materiais</span>
+                </div>
+                <i id="arrow-menu-materiais" class="fas fa-chevron-down text-[10px] text-gray-400 transition-transform"></i>
+            </button>
+            <div id="menu-materiais" class="hidden pl-8 space-y-1 mt-1">
+                <a href="/products.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-50 transition-colors">Produtos</a>
+                <a href="/inventory.php" class="block py-2 px-3 text-sm text-gray-500 hover:text-blue-600 rounded-lg hover:bg-gray-50 transition-colors">Estoque</a>
             </div>
         </div>
 
@@ -198,7 +211,8 @@ if($current_company_id) {
         // Auto-open menu based on current page
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
-            if (currentPath.includes('clients') || currentPath.includes('products')) toggleMenu('menu-cadastros');
+            if (currentPath.includes('clients')) toggleMenu('menu-cadastros');
+            if (currentPath.includes('products') || currentPath.includes('inventory')) toggleMenu('menu-materiais');
             if (currentPath.includes('calendar') || currentPath.includes('quotes')) toggleMenu('menu-agendamentos');
             if (currentPath.includes('finance') || currentPath.includes('banks') || currentPath.includes('contas') || currentPath.includes('portadores') || currentPath.includes('tipos_pagamento')) toggleMenu('menu-financeiro');
             if (currentPath.includes('companies') || currentPath.includes('user') || currentPath.includes('settings')) toggleMenu('menu-config');

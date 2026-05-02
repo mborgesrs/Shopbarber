@@ -350,26 +350,39 @@ function setCycle(cycle) {
     });
 }
 function simulateWebhook(invoiceId) {
-    if (!confirm('Deseja simular o aviso de pagamento do Asaas para esta fatura? Isso acionará o seu Webhook local.')) return;
-    
-    const formData = new FormData();
-    formData.append('invoice_id', invoiceId);
-    
-    fetch('api/asaas_simulate_webhook.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert('Erro: ' + data.message);
+    Swal.fire({
+        title: 'Simular Pagamento?',
+        text: 'Isso acionará o seu Webhook local para esta fatura.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sim, simular',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('invoice_id', invoiceId);
+            
+            fetch('api/asaas_simulate_webhook.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Sucesso', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Erro', data.message, 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Erro', 'Erro ao processar simulação.', 'error');
+            });
         }
-    })
-    .catch(err => {
-        alert('Erro ao processar simulação.');
     });
 }
 </script>

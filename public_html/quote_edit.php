@@ -327,7 +327,7 @@ main { scrollbar-width: none !important; -ms-overflow-style: none !important; }
                 <?php if($quote['status'] != 'Concluido'): ?>
                     <button type="submit" onclick="document.getElementById('formAction').value='save'" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded font-medium shadow-sm transition-colors">Salvar Alterações</button>
                     
-                    <button type="submit" onclick="if(confirm('Confirmar atendimento e gerar financeiro?')) { document.getElementById('formAction').value='complete'; return true; } else { return false; }" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded font-medium shadow-sm transition-colors flex items-center">
+                    <button type="submit" onclick="event.preventDefault(); Swal.fire({title: 'Confirmação', text: 'Confirmar atendimento e gerar financeiro?', icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#64748b', confirmButtonText: 'Sim, concluir', cancelButtonText: 'Cancelar', reverseButtons: true}).then((result) => { if(result.isConfirmed) { document.getElementById('formAction').value='complete'; this.closest('form').submit(); } })" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded font-medium shadow-sm transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Concluir Agendamento
                     </button>

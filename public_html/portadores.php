@@ -60,7 +60,7 @@ $list = $stmt->fetchAll();
                     <button onclick='openModal(<?= json_encode(["id" => $item["id"], "name" => $item["nome"]]) ?>)' class="w-8 h-8 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <form method="post" class="inline" onsubmit="return confirm('Deseja realmente excluir este portador?')">
+                    <form method="post" class="inline" onsubmit="confirmFormSubmit(event, this, 'Deseja realmente excluir este portador?')">
                         <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
                         <button class="w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all">
                             <i class="fas fa-trash"></i>

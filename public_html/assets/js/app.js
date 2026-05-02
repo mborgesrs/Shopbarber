@@ -31,3 +31,42 @@
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
+
+// Global SweetAlert2 Confirmation Helpers
+window.confirmAction = function(event, url, message = 'Tem certeza que deseja excluir?') {
+    event.preventDefault();
+    Swal.fire({
+        title: 'Confirmação',
+        text: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sim, confirmar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+};
+
+window.confirmFormSubmit = function(event, formElement, message = 'Deseja realmente continuar?') {
+    event.preventDefault();
+    Swal.fire({
+        title: 'Confirmação',
+        text: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sim, confirmar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            formElement.submit();
+        }
+    });
+};

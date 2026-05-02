@@ -214,7 +214,7 @@ $professionals = $professionals->fetchAll();
                                 <a title="Ver / PDF" href="quote_view.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
                                     <i class="fas fa-file-pdf text-xs"></i>
                                 </a>
-                                <a title="Excluir" href="quote_delete.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" onclick="return confirm('Excluir?')">
+                                <a title="Excluir" href="quote_delete.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" onclick="confirmAction(event, this.href, 'Excluir?')">
                                     <i class="fas fa-trash text-xs"></i>
                                 </a>
                             </div>

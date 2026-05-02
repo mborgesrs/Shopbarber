@@ -75,10 +75,10 @@ $rows = $stmt->fetchAll();
             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             Editar
           </a>
-          <button class="text-slate-500 hover:text-red-600 font-medium text-[11px] inline-flex items-center" onclick="deleteItem(<?=$r['id']?>)">
+          <a href="financial_account_delete.php?id=<?=$r['id']?>" class="text-slate-500 hover:text-red-600 font-medium text-[11px] inline-flex items-center" onclick="confirmAction(event, this.href, 'Essa ação não pode ser desfeita.')">
              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
              Excluir
-          </button>
+          </a>
         </td>
       </tr>
       <?php endforeach; ?>
@@ -89,23 +89,6 @@ $rows = $stmt->fetchAll();
   </table>
 </div>
 
-<script>
-function deleteItem(id) {
-    Swal.fire({
-        title: 'Tem certeza?',
-        text: "Essa ação não pode ser desfeita.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = 'financial_account_delete.php?id=' + id;
-        }
-    })
-}
-</script>
+
 
 <?php include __DIR__ . '/../views/footer.php'; ?>

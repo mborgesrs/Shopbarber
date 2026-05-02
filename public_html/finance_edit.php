@@ -247,7 +247,7 @@ $tipos_pagamento = $tipos_pagamento->fetchAll();
             <a href="finance.php" class="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded hover:bg-slate-50 font-medium transition-colors">Voltar</a>
             
             <?php if($currentStatus == 'Aberto' && in_array($finance['type'], ['Pagar', 'Receber'])): ?>
-              <a href="finance_liquidate.php?id=<?=$id?>" onclick="event.preventDefault(); confirmLiquidation(this.href)" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded font-medium shadow-sm transition-colors flex items-center">
+              <a href="finance_liquidate.php?id=<?=$id?>" onclick="confirmAction(event, this.href, 'Deseja realmente liquidar este registro?')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded font-medium shadow-sm transition-colors flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Liquidar
               </a>

@@ -120,7 +120,7 @@ $totalClients = count($clients);
               <a title="Editar" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm" href="client_edit.php?id=<?=$c['id']?>">
                 <i class="fas fa-edit text-[10px]"></i>
               </a>
-              <a title="Excluir" class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" href="client_delete.php?id=<?=$c['id']?>" onclick="return confirm('Excluir?')">
+              <a title="Excluir" class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm" href="client_delete.php?id=<?=$c['id']?>" onclick="confirmAction(event, this.href, 'Excluir?')">
                 <i class="fas fa-trash text-[10px]"></i>
               </a>
             </div>

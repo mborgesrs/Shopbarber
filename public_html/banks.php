@@ -62,7 +62,7 @@ $list = $stmt->fetchAll();
                         <button onclick='openModal(<?= json_encode($item) ?>)' class="w-7 h-7 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                             <i class="fas fa-edit text-xs"></i>
                         </button>
-                        <form method="post" class="inline" onsubmit="return confirm('Deseja realmente excluir este banco?')">
+                        <form method="post" class="inline" onsubmit="confirmFormSubmit(event, this, 'Deseja realmente excluir este banco?')">
                             <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
                             <button class="w-7 h-7 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all">
                                 <i class="fas fa-trash text-xs"></i>

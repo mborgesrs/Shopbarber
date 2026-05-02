@@ -61,7 +61,7 @@ $banks = $stmt->fetchAll();
                         <td class="px-4 py-2 font-medium"><?= htmlspecialchars($item['name']) ?></td>
                         <td class="px-4 py-2 text-gray-500"><?= htmlspecialchars($item['bank_name'] ?: 'N/A') ?></td>
                         <td class="px-4 py-2 text-right">
-                            <form method="post" class="inline" onsubmit="return confirm('Excluir?')">
+                            <form method="post" class="inline" onsubmit="confirmFormSubmit(event, this, 'Excluir?')">
                                 <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
                                 <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
                             </form>

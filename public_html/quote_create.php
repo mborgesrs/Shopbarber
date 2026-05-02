@@ -88,7 +88,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       exit;
   }
   
-  $send = isset($_POST['send_whatsapp']);
+  $send = isset($_POST['send_sms']);
   if($send){
     // Documentação: Busca os dados de contato do cliente
     $c = $pdo->prepare('SELECT phone,name FROM clients WHERE id=? AND company_id=?'); 
@@ -97,28 +97,23 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     
     $phone = preg_replace('/\D/','',$client['phone']);
     $msg_text = "Olá {$client['name']}, seu agendamento está confirmado em " . date('d/m/Y H:i', strtotime($date_time)) . ". Obrigado!";
-    $msg_encoded = rawurlencode($msg_text);
     
     if($phone){
-        // Documentação: Busca as configurações do Evolution API no banco de dados
-        $setStmt = $pdo->prepare('SELECT evolution_api_url, evolution_instance, evolution_api_key, evolution_active FROM settings WHERE company_id=?');
+        // Documentação: Busca as configurações da Zenvia API no banco de dados
+        $setStmt = $pdo->prepare('SELECT zenvia_api_token, zenvia_sender_id, zenvia_active FROM settings WHERE company_id=?');
         $setStmt->execute([$company_id]);
         $apiSettings = $setStmt->fetch();
 
-        // Documentação: Se o Evolution API estiver ativo e a URL configurada, dispara via API
-        if (!empty($apiSettings['evolution_active']) && !empty($apiSettings['evolution_api_url'])) {
-            require_once __DIR__ . '/../lib/EvolutionAPI.php';
-            $evo = new EvolutionAPI($apiSettings['evolution_api_url'], $apiSettings['evolution_instance'], $apiSettings['evolution_api_key']);
+        // Documentação: Se o Zenvia API estiver ativo e o token configurado, dispara o SMS
+        if (!empty($apiSettings['zenvia_active']) && !empty($apiSettings['zenvia_api_token'])) {
+            require_once __DIR__ . '/../lib/ZenviaAPI.php';
+            $zenvia = new ZenviaAPI($apiSettings['zenvia_api_token'], $apiSettings['zenvia_sender_id']);
             
-            // Documentação: Executa o envio sem interromper a navegação do usuário
-            $evo->sendText($phone, $msg_text);
-            
-            // Obs: Diferente do link wa.me, aqui não damos 'exit' para que a página possa redirecionar para 'quotes.php' normalmente abaixo
-        } else {
-            // Documentação: Comportamento Padrão (Redirecionamento manual para WhatsApp Web/App)
-            header('Location: https://wa.me/'.$phone.'?text='.$msg_encoded); 
-            exit; 
+            // Documentação: Executa o envio
+            $zenvia->sendSms($phone, $msg_text);
         }
+        // Diferente da versão antiga do WhatsApp, se a integração de SMS estiver desligada, 
+        // o envio é apenas ignorado, sem fallback para a interface web.
     }
   }
   
@@ -320,8 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span id="totalDisplay" class="text-xl font-bold text-blue-600 tracking-tight">R$ 0,00</span>
               </div>
               <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" name="send_whatsapp" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                  <span class="text-[11px] text-gray-500 group-hover:text-blue-600 transition-colors">Enviar confirmação via WhatsApp</span>
+                  <input type="checkbox" name="send_sms" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  <span class="text-[11px] text-gray-500 group-hover:text-blue-600 transition-colors">Enviar confirmação via SMS</span>
               </label>
           </div>
       </div>

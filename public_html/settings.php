@@ -27,26 +27,25 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $asaas_api_key = $_POST['asaas_api_key'] ?? null;
     $asaas_environment = $_POST['asaas_environment'] ?? 'sandbox';
     
-    // Documentação: Recebe os dados do Evolution API vindos do formulário
-    $evolution_api_url = rtrim($_POST['evolution_api_url'] ?? '', '/');
-    $evolution_instance = $_POST['evolution_instance'] ?? '';
-    $evolution_api_key = $_POST['evolution_api_key'] ?? '';
-    $evolution_active = isset($_POST['evolution_active']) ? 1 : 0;
+    // Documentação: Recebe os dados da Zenvia API vindos do formulário
+    $zenvia_api_token = $_POST['zenvia_api_token'] ?? '';
+    $zenvia_sender_id = $_POST['zenvia_sender_id'] ?? '';
+    $zenvia_active = isset($_POST['zenvia_active']) ? 1 : 0;
     
-    // Documentação: Atualiza a tabela settings adicionando os campos do Evolution API na query
+    // Documentação: Atualiza a tabela settings adicionando os campos da Zenvia API na query
     $stmt = $pdo->prepare("UPDATE settings SET 
         company_name=?, fantasy_name=?, phone=?, email=?, address=?, 
         pix_key_type=?, pix_key=?, pix_merchant_name=?, pix_merchant_city=?, pix_bank_id=?,
         cnpj=?, cpf=?, cep=?, logradouro=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?,
         asaas_api_key=?, asaas_environment=?, apicpf_key=?,
-        evolution_api_url=?, evolution_instance=?, evolution_api_key=?, evolution_active=?
+        zenvia_api_token=?, zenvia_sender_id=?, zenvia_active=?
         WHERE company_id=?");
     $stmt->execute([
         $company_name, $fantasy_name, $phone, $email, $address, 
         $_POST['pix_key_type'], $_POST['pix_key'], $_POST['pix_merchant_name'], $_POST['pix_merchant_city'], $_POST['pix_bank_id'],
         $cnpj, $cpf, $cep, $logradouro, $numero, $complemento, $bairro, $cidade, $estado,
         $asaas_api_key, $asaas_environment, $_POST['apicpf_key'] ?? null,
-        $evolution_api_url, $evolution_instance, $evolution_api_key, $evolution_active,
+        $zenvia_api_token, $zenvia_sender_id, $zenvia_active,
         $company_id
     ]);
 
@@ -381,54 +380,46 @@ $banks = $pdo->query("SELECT * FROM banks ORDER BY name")->fetchAll();
             </div>
         </div>
 
-        <!-- Integração Evolution API (WhatsApp) -->
-        <!-- Documentação: Novo bloco de configuração para a API do WhatsApp -->
+        <!-- Integração Zenvia API (SMS) -->
+        <!-- Documentação: Novo bloco de configuração para a API de SMS -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2 font-bold text-sm text-gray-700 uppercase tracking-wider">
-                <i class="fab fa-whatsapp text-emerald-500"></i>
-                Integração WhatsApp (Evolution API)
+                <i class="fas fa-sms text-emerald-500"></i>
+                Integração SMS (Zenvia API)
             </div>
             <div class="p-6 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-1 md:col-span-2">
-                        <!-- Documentação: Campo para informar a URL base da Evolution API -->
-                        <label class="text-xs font-bold text-gray-500 uppercase">URL da API (Endpoint)</label>
-                        <input type="text" name="evolution_api_url" value="<?= htmlspecialchars($settings['evolution_api_url'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="https://api.seudominio.com.br">
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <!-- Documentação: Campo para informar o nome da Instância no painel do Evolution -->
-                        <label class="text-xs font-bold text-gray-500 uppercase">Nome da Instância</label>
-                        <input type="text" name="evolution_instance" value="<?= htmlspecialchars($settings['evolution_instance'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="barber123">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-1 md:col-span-2">
-                        <!-- Documentação: Campo para informar a Global API Key ou Instance API Key -->
-                        <label class="text-xs font-bold text-gray-500 uppercase">Chave da API (API Key)</label>
+                        <!-- Documentação: Campo para informar a API Token da Zenvia -->
+                        <label class="text-xs font-bold text-gray-500 uppercase">API Token (X-API-TOKEN)</label>
                         <div class="relative">
-                            <input type="password" name="evolution_api_key" value="<?= htmlspecialchars($settings['evolution_api_key'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="Sua Chave API">
+                            <input type="password" name="zenvia_api_token" value="<?= htmlspecialchars($settings['zenvia_api_token'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="Sua Chave API">
                             <button type="button" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <i class="fas fa-eye text-xs"></i>
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center pt-5">
-                        <!-- Documentação: Toggle para Ativar/Desativar os disparos automatizados -->
-                        <label class="flex items-center gap-2 cursor-pointer group">
-                            <div class="relative">
-                                <input type="checkbox" name="evolution_active" value="1" <?= (!empty($settings['evolution_active'])) ? 'checked' : '' ?> class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                            </div>
-                            <span class="text-sm font-bold text-gray-700">Ativar Envios Automáticos</span>
-                        </label>
+                    <div class="space-y-1">
+                        <!-- Documentação: Campo para informar o Sender ID no painel da Zenvia -->
+                        <label class="text-xs font-bold text-gray-500 uppercase">Sender ID (Remetente)</label>
+                        <input type="text" name="zenvia_sender_id" value="<?= htmlspecialchars($settings['zenvia_sender_id'] ?? '') ?>" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="Nome/Número Remetente">
                     </div>
+                </div>
+                
+                <div class="flex items-center pt-2">
+                    <!-- Documentação: Toggle para Ativar/Desativar os disparos automatizados de SMS -->
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="zenvia_active" value="1" <?= (!empty($settings['zenvia_active'])) ? 'checked' : '' ?> class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700">Ativar Envios Automáticos</span>
+                    </label>
                 </div>
                 
                 <p class="text-[11px] text-gray-400 italic">
                     <i class="fas fa-info-circle mr-1"></i> 
-                    Configure os dados da sua Evolution API. Quando ativo, o sistema enviará as confirmações de agendamento em segundo plano, direto pelo seu servidor, sem precisar abrir o WhatsApp Web.
+                    Configure os dados da sua Zenvia API. Quando ativo, o sistema enviará as confirmações de agendamento automaticamente via SMS.
                 </p>
             </div>
         </div>

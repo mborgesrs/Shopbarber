@@ -95,11 +95,11 @@ $today_rows = $stmt->fetchAll();
                 <p>Nenhum agendamento para hoje.</p>
             </div>
         <?php else: ?>
-            <div class="space-y-4">
+            <div class="space-y-1">
                 <?php foreach($today_rows as $r): ?>
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100 group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-white rounded-lg flex flex-col items-center justify-center border border-gray-200">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100 group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white rounded-lg flex flex-col items-center justify-center border border-gray-200 flex-shrink-0">
                                 <span class="text-xs font-bold text-indigo-600 uppercase"><?= date('H:i', strtotime($r['date_time'])) ?></span>
                             </div>
                             <div>

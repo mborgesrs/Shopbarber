@@ -152,13 +152,13 @@ $professionals = $professionals->fetchAll();
         <table class="w-full text-sm">
             <thead class="bg-gray-50/50 border-b border-gray-100 text-[11px] uppercase text-gray-400 tracking-widest font-bold">
                 <tr>
-                    <th class="px-6 py-4 text-left">Data/Hora</th>
-                    <th class="px-6 py-4 text-left">Pessoa</th>
-                    <th class="px-6 py-4 text-left">Serviços</th>
-                    <th class="px-6 py-4 text-left">Profissional</th>
-                    <th class="px-6 py-4 text-left">Valor</th>
-                    <th class="px-6 py-4 text-left">Status</th>
-                    <th class="px-6 py-4 text-right">Ações</th>
+                    <th class="px-6 py-3 text-left">Data/Hora</th>
+                    <th class="px-6 py-3 text-left">Pessoa</th>
+                    <th class="px-6 py-3 text-left">Serviços</th>
+                    <th class="px-6 py-3 text-left">Profissional</th>
+                    <th class="px-6 py-3 text-left">Valor</th>
+                    <th class="px-6 py-3 text-left">Status</th>
+                    <th class="px-6 py-3 text-right">Ações</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -171,7 +171,7 @@ $professionals = $professionals->fetchAll();
                         $servicesText = implode(', ', $serviceNames);
                     ?>
                     <tr class="hover:bg-gray-50/80 transition-colors group">
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <div class="flex flex-col">
                                 <span class="text-gray-900 font-bold text-xs"><?=date('d/m/Y', strtotime($q['date_time']))?></span>
                                 <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm shadow-indigo-100 w-fit mt-1">
@@ -180,22 +180,22 @@ $professionals = $professionals->fetchAll();
                                 </span>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <div class="flex flex-col">
                                 <span class="text-gray-900 font-bold"><?=htmlspecialchars($q['client_name'])?></span>
                                 <span class="text-xs text-gray-400"><?=htmlspecialchars($q['notes']) ?: 'Sem observações'?></span>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <span class="text-xs text-gray-600"><?= htmlspecialchars($servicesText) ?: '<span class="text-gray-300 italic">Nenhum</span>' ?></span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <span class="text-gray-600 font-medium"><?=htmlspecialchars($q['prof_name'] ?: 'Não definido')?></span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                            <span class="font-bold text-gray-700">R$ <?= number_format($q['total'], 2, ',', '.') ?></span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <?php 
                             $status_class = 'bg-gray-100 text-gray-600';
                             if($q['status']=='Confirmado') $status_class = 'bg-blue-100 text-blue-700';
@@ -206,7 +206,7 @@ $professionals = $professionals->fetchAll();
                                 <?= $q['status'] ?>
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-right">
+                        <td class="px-6 py-2 text-right">
                             <div class="flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                 <a title="Editar" href="quote_edit.php?id=<?=$q['id']?>" class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                     <i class="fas fa-edit text-xs"></i>
